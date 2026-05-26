@@ -26,7 +26,7 @@ export const MarketPricesSchema = z.object({
 export const AgentInitSchema = z.object({
   slot: z.string().min(1),
   name: z.string().min(1),
-  model: z.string().min(1),
+  model: z.string().optional(),
   role: AgentRoleSchema,
   religion: ReligionSchema,
 });
@@ -38,6 +38,7 @@ export const RunConfigSchema = z.object({
   regime: RegimeSchema,
   religions: z.array(ReligionSchema).min(1),
   cast: z.array(AgentInitSchema).min(2),
+  defaultModel: z.string().min(1).default("ministral-3:3b-cloud"),
   startingEndowments: ResourcesSchema,
   marketPrices: MarketPricesSchema,
   apPerDay: z.number().int().positive(),

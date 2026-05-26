@@ -21,7 +21,7 @@ async function initializeAgent(init: AgentInit, config: RunConfig): Promise<Agen
   return {
     id: init.slot,
     name: init.name,
-    model: init.model,
+    model: init.model ?? config.defaultModel,
     role: init.role,
     isResearchSubject: init.role === "villager",
     coreIdentity: persona.coreIdentity,

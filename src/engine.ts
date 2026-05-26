@@ -27,6 +27,7 @@ export async function runSimulation(
   hooks: EngineHooks = {},
 ): Promise<void> {
   const baseRng = makeRng(world.config.seed);
+  const t0 = Date.now();
 
   while (world.day <= world.config.days) {
     const daySeed = world.config.seed + world.day;
@@ -34,20 +35,37 @@ export async function runSimulation(
 
     startDay(world);
     const holyDay = computeHolyDay(world.day);
-    await logger.logDayHeader(world, holyDay);
+    logger.logDayHeader(world, holyDay);
 
     const publicEventsToday: EventLogEntry[] = [];
     const orderedSlots = shuffled(Object.keys(world.agents), dayRng);
 
     let round = 0;
+    let actionsToday = 0;
     while (anyAgentCanAct(world, orderedSlots)) {
       round += 1;
-      await logger.logRoundHeader(round);
-      for (const slot of orderedSlots) {
-        const agent = world.agents[slot]!;
-        if (agent.actionPointsLeft <= 0 || agent.restedToday) continue;
+      logger.logRoundHeader(round);
 
-        const result = await takeOneAction(world, agent, publicEventsToday, dayRng, round);
+      // Snapshot public events before this round so all agents reason from the
+      // same information (they can't react to simultaneous decisions).
+      const publicEventsSnapshot = [...publicEventsToday];
+
+      const activeSlots = orderedSlots.filter((slot) => {
+        const a = world.agents[slot]!;
+        return a.actionPointsLeft > 0 && !a.restedToday;
+      });
+
+      // Fire all LLM calls in parallel, then apply mutations sequentially.
+      const decisions = await Promise.all(
+        activeSlots.map((slot) => {
+          const agent = world.agents[slot]!;
+          return takeOneAction(world, agent, publicEventsSnapshot, dayRng, round).then(
+            (result) => ({ slot, agent, result }),
+          );
+        }),
+      );
+
+      for (const { agent, result } of decisions) {
         if (!result) continue;
 
         const entry: Extract<EventLogEntry, { type: "action" }> = {
@@ -63,29 +81,40 @@ export async function runSimulation(
           public: result.publicEvent,
           reasoning: result.request.reasoning,
         };
-        await logger.logEvent(entry);
-        await logger.logActionProse(formatActionForProse(agent, entry));
+        logger.logEvent(entry);
+        logger.logActionProse(formatActionForProse(agent, entry));
         if (hooks.onAction) await hooks.onAction(entry);
 
         publicEventsToday.push(entry);
+        actionsToday += 1;
         agent.recentEvents.push(entry);
         pruneRecentEvents(agent, world.day);
 
         // Move DMs that were sent on previous turns into recentEvents next time.
         moveReceivedDmsToMemory(agent, world.day);
       }
+
+      // Flush buffered log writes once per round.
+      await logger.flush();
     }
 
     // End-of-day
     endDay(world);
     const snapshot = snapshotAgents(world);
-    await logger.logEvent({ type: "day_end", day: world.day, state: snapshot });
-    await logger.logNightProse(world, snapshot);
+    logger.logEvent({ type: "day_end", day: world.day, state: snapshot });
+    logger.logNightProse(world, snapshot);
 
     // Weekly reflection
     if (world.day % 7 === 0) {
       await runWeeklyReflections(world, logger, baseRng);
     }
+
+    await logger.flush();
+
+    const elapsed = Math.round((Date.now() - t0) / 1000);
+    console.log(
+      `[day ${world.day}/${world.config.days}] ${actionsToday} actions, ${round} rounds — ${elapsed}s elapsed`,
+    );
 
     world.day += 1;
   }
@@ -220,7 +249,7 @@ function formatActionForProse(
 function pruneRecentEvents(agent: AgentState, today: number): void {
   agent.recentEvents = agent.recentEvents.filter((e) => {
     if (e.type !== "action") return false;
-    return today - e.day <= 14;
+    return today - e.day <= 7;
   });
 }
 
@@ -249,22 +278,28 @@ async function runWeeklyReflections(
 ): Promise<void> {
   const weekNumber = Math.floor(world.day / 7);
   const slots = Object.keys(world.agents);
-  for (const slot of slots) {
-    const agent = world.agents[slot]!;
-    const eventsThisWeek = agent.recentEvents.filter(
-      (e) => e.type === "action" && world.day - e.day < 7,
-    );
-    const seed = Math.floor(baseRng() * 1_000_000) + world.day;
-    const { newCurrentState } = await reflectAgent(agent, {
-      world,
-      weekNumber,
-      eventsThisWeek,
-      trigger: "weekly",
-      seed,
-    });
+
+  const reflections = await Promise.all(
+    slots.map((slot) => {
+      const agent = world.agents[slot]!;
+      const eventsThisWeek = agent.recentEvents.filter(
+        (e) => e.type === "action" && world.day - e.day < 7,
+      );
+      const seed = Math.floor(baseRng() * 1_000_000) + world.day;
+      return reflectAgent(agent, {
+        world,
+        weekNumber,
+        eventsThisWeek,
+        trigger: "weekly",
+        seed,
+      }).then(({ newCurrentState }) => ({ agent, newCurrentState }));
+    }),
+  );
+
+  for (const { agent, newCurrentState } of reflections) {
     const prev = agent.currentState;
     agent.currentState = newCurrentState;
-    await logger.logEvent({
+    logger.logEvent({
       type: "reflection",
       day: world.day,
       actor: agent.id,
@@ -274,5 +309,6 @@ async function runWeeklyReflections(
       new_state: newCurrentState,
     });
   }
-  await logger.logReflectionMarker(world.day, weekNumber, slots);
+
+  logger.logReflectionMarker(world.day, weekNumber, slots);
 }

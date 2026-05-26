@@ -152,7 +152,7 @@ function formatMemory(events: EventLogEntry[], today: number): string {
   for (const e of events) {
     if (e.type !== "action") continue;
     const d = e.day;
-    if (today - d > 14) continue;
+    if (today - d > 7) continue;
     const arr = grouped.get(d) ?? [];
     arr.push(formatMemoryLine(e));
     grouped.set(d, arr);

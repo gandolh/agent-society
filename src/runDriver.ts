@@ -53,7 +53,7 @@ async function main(): Promise<void> {
 
   const world = await initializeWorld(config);
   const logger = new RunLogger(config.runDir);
-  await logger.init(config);
+  await logger.init(config, Object.values(world.agents));
 
   await runSimulation(world, logger);
 
@@ -67,17 +67,24 @@ function defaultRun01Config(): RunConfig {
     days: 100,
     regime: "socialism",
     religions: ["Christianity", "TrueVine", "Atheism"],
+    // Per-agent model overrides — omit to use defaultModel.
+    // Available free-tier models (probed 2026-05-26):
+    //   ministral-3:3b-cloud, ministral-3:8b-cloud, gpt-oss:20b-cloud,
+    //   gemma4:31b-cloud, nemotron-3-super:cloud
+    // For diversity runs, set model per-agent, e.g.:
+    //   { slot: "V1", ..., model: "gemma4:31b-cloud" }
     cast: [
-      { slot: "V1", name: "Eda", model: "gemma4:31b-cloud", role: "villager", religion: "Christianity" },
-      { slot: "V2", name: "Bram", model: "ministral-3:8b-cloud", role: "villager", religion: "Atheism" },
-      { slot: "V3", name: "Lior", model: "nemotron-3-super:cloud", role: "villager", religion: "TrueVine" },
-      { slot: "N1", name: "Aldric", model: "gpt-oss:20b-cloud", role: "regime-leader", religion: "Christianity" },
-      { slot: "N2", name: "Father Maro", model: "gpt-oss:20b-cloud", role: "priest", religion: "Christianity" },
-      { slot: "N3", name: "Sister Velka", model: "gpt-oss:20b-cloud", role: "cult-leader", religion: "TrueVine" },
+      { slot: "V1", name: "Eda", role: "villager", religion: "Christianity" },
+      { slot: "V2", name: "Bram", role: "villager", religion: "Atheism" },
+      { slot: "V3", name: "Lior", role: "villager", religion: "TrueVine" },
+      { slot: "N1", name: "Aldric", role: "regime-leader", religion: "Christianity" },
+      { slot: "N2", name: "Father Maro", role: "priest", religion: "Christianity" },
+      { slot: "N3", name: "Sister Velka", role: "cult-leader", religion: "TrueVine" },
     ],
+    defaultModel: "ministral-3:3b-cloud",
     startingEndowments: { gold: 5, food: 3, seeds: 3 },
     marketPrices: { buySeeds: 2, buyFood: 1, sellAny: 1 },
-    apPerDay: 7,
+    apPerDay: 5,
     cropMaturityDays: 3,
     foodPerCrop: 3,
     hungerApPenalty: [7, 7, 6, 5, 3],
