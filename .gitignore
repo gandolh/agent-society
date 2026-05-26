@@ -70,6 +70,9 @@ web_modules/
 .env.*
 !.env.example
 
+# Simulation run outputs (raw data, may contain API keys in config.json)
+runs/
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

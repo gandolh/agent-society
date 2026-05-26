@@ -64,7 +64,7 @@ function defaultRun01Config(): RunConfig {
   return {
     runName: "2026-05-26_socialism_run01",
     seed: 42,
-    days: 100,
+    days: 31,
     regime: "socialism",
     religions: ["Christianity", "TrueVine", "Atheism"],
     // Per-agent model overrides — omit to use defaultModel.

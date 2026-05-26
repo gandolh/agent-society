@@ -1,7 +1,7 @@
 {
-  "runName": "2026-05-26_socialism_run01_smoke",
+  "runName": "2026-05-26_socialism_run01",
   "seed": 42,
-  "days": 1,
+  "days": 31,
   "regime": "socialism",
   "religions": [
     "Christianity",
@@ -12,46 +12,41 @@
     {
       "slot": "V1",
       "name": "Eda",
-      "model": "gemma4:31b-cloud",
       "role": "villager",
       "religion": "Christianity"
     },
     {
       "slot": "V2",
       "name": "Bram",
-      "model": "ministral-3:8b-cloud",
       "role": "villager",
       "religion": "Atheism"
     },
     {
       "slot": "V3",
       "name": "Lior",
-      "model": "nemotron-3-super:cloud",
       "role": "villager",
       "religion": "TrueVine"
     },
     {
       "slot": "N1",
       "name": "Aldric",
-      "model": "gpt-oss:20b-cloud",
       "role": "regime-leader",
       "religion": "Christianity"
     },
     {
       "slot": "N2",
       "name": "Father Maro",
-      "model": "gpt-oss:20b-cloud",
       "role": "priest",
       "religion": "Christianity"
     },
     {
       "slot": "N3",
       "name": "Sister Velka",
-      "model": "gpt-oss:20b-cloud",
       "role": "cult-leader",
       "religion": "TrueVine"
     }
   ],
+  "defaultModel": "ministral-3:3b-cloud",
   "startingEndowments": {
     "gold": 5,
     "food": 3,
@@ -62,7 +57,7 @@
     "buyFood": 1,
     "sellAny": 1
   },
-  "apPerDay": 7,
+  "apPerDay": 5,
   "cropMaturityDays": 3,
   "foodPerCrop": 3,
   "hungerApPenalty": [
@@ -74,6 +69,5 @@
   ],
   "corpusPath": "/home/gandolh/projects/agent-society/corpus",
   "runDir": "/home/gandolh/projects/agent-society/runs/2026-05-26_socialism_run01",
-  "ollamaBaseUrl": "https://ollama.com",
-  "ollamaApiKey": "2b00f54aaf694b41994f22d7746cbce5.SY1vMZTB2wmCwQlTfsiv_H0R"
+  "ollamaBaseUrl": "https://ollama.com"
 }

@@ -6,9 +6,10 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "run": "tsx src/runDriver.ts",
-    "run:run01": "tsx src/runDriver.ts runs/2026-05-26_socialism_run01/config.json",
+    "sim": "tsx src/runDriver.ts",
+    "sim:run01": "tsx src/runDriver.ts runs/2026-05-26_socialism_run01/config.json",
     "smoke": "tsx src/runDriver.ts --smoke",
+    "smoke:run01": "tsx src/runDriver.ts --smoke runs/2026-05-26_socialism_run01/config.json",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

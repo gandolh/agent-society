@@ -27,9 +27,10 @@ export class RunLogger {
     // Wipe any previous run in this directory (e.g. repeated smoke runs).
     await rm(this.runDir, { recursive: true, force: true });
     await mkdir(this.runDir, { recursive: true });
+    const { ollamaApiKey: _redacted, ...safeConfig } = config;
     await writeFile(
       join(this.runDir, "config.json"),
-      JSON.stringify(config, null, 2),
+      JSON.stringify(safeConfig, null, 2),
     );
     const castLine = agents
       .map((a) => `${a.id} (${a.name}, ${a.model})`)
