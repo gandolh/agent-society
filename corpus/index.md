@@ -57,3 +57,4 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 - [decisions/005-manual-observer-workflow.md](decisions/005-manual-observer-workflow.md) — no API integration; user pastes transcripts to Claude
 - [decisions/006-bifurcated-persona-with-reflection.md](decisions/006-bifurcated-persona-with-reflection.md) — immutable core + mutable current-state via weekly reflection
 - [decisions/007-mvp-cast-size.md](decisions/007-mvp-cast-size.md) — 3 villagers + 3 NPCs for initial setup
+- [decisions/008-ollama-cloud-and-zod-boundary.md](decisions/008-ollama-cloud-and-zod-boundary.md) — Ollama Cloud + .env secrets + Zod at boundaries

@@ -1,0 +1,28 @@
+{
+  "name": "agent-society",
+  "version": "0.1.0",
+  "description": "TypeScript + Ollama framework for running small village simulations with LLM agents under different regime and religion conditions.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "run": "tsx src/runDriver.ts",
+    "run:run01": "tsx src/runDriver.ts runs/2026-05-26_socialism_run01/config.json",
+    "smoke": "tsx src/runDriver.ts --smoke",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "seedrandom": "^3.0.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/seedrandom": "^3.0.8",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

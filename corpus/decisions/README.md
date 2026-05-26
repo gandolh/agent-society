@@ -56,6 +56,7 @@ What does this enable? What does this make harder? What are the open questions?
 | 005 | [manual-observer-workflow](005-manual-observer-workflow.md) | accepted |
 | 006 | [bifurcated-persona-with-reflection](006-bifurcated-persona-with-reflection.md) | accepted |
 | 007 | [mvp-cast-size](007-mvp-cast-size.md) | accepted |
+| 008 | [ollama-cloud-and-zod-boundary](008-ollama-cloud-and-zod-boundary.md) | accepted |
 
 ## Superseding
 
