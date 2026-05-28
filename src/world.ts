@@ -23,7 +23,7 @@ async function initializeAgent(init: AgentInit, config: RunConfig): Promise<Agen
     name: init.name,
     model: init.model ?? config.defaultModel,
     role: init.role,
-    isResearchSubject: init.role === "villager",
+    isResearchSubject: init.role === "citizen",
     coreIdentity: persona.coreIdentity,
     currentState: persona.initialCurrentState,
     religion: init.religion,

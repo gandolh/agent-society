@@ -93,3 +93,17 @@ three more low-usage free models:
 
 Four distinct families across the cast. Total parameter weight ~108B (was ~640B+).
 The slow `glm-4.7:cloud` (~5s response) is no longer in the cast.
+
+## [2026-05-28] ingest | v2 pivot — city + capitalism + (Christian/atheist) cast
+
+Major scenario pivot after run 01. Captured in [decisions/009-city-capitalism-christian-pivot.md](decisions/009-city-capitalism-christian-pivot.md).
+
+- **Setting:** village → small working city.
+- **Regime:** the three-regime sweep retired; capitalism is the only regime in v2. `Regime` enum collapsed to `"capitalism"`.
+- **Religion:** True Vine reform branch retired; only Christianity + atheism remain. `Religion` enum collapsed to `["Christianity", "Atheism"]`.
+- **Cast:** six new personas with distinct jobs (baker, doctor, apprentice carpenter, mill owner, priest, newspaper editor). Bram (doctor), Lior (apprentice carpenter), Aldric (mill owner), and Father Maro keep their names with reskinned roles. V1 Eda → V1 Tessa (baker). N3 Sister Velka → N3 Nyssa Velkin (newspaper editor).
+- **Jobs are narrative.** Engine action set unchanged. `plot` = workplace, `seeds` = stock/materials.
+- **`AgentRole` enum** collapsed to `citizen | industrialist | priest | editor`.
+- **Token diet.** Rewrote the system-prompt blocks tighter: regime/religion descriptions compressed, action descriptions trimmed, roster line shortened (`g5 f3 s3` vs full breakdown), memory format collapsed to one-line-per-day. Aim: ~30% reduction per-turn.
+- Files deleted: `world/regimes/socialism.md`, `world/regimes/monarchy.md`, `world/religions/true-vine.md`, and the six old persona files (replaced).
+- `runs/2026-05-26_socialism_run01/` preserved as raw v1 data.

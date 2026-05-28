@@ -17,26 +17,23 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 
 ## World — what is being simulated
 
-- [world/setting.md](world/setting.md) — the village
-- [world/economy.md](world/economy.md) — gold, seeds, food, market, plot mechanics
-- [world/regimes/overview.md](world/regimes/overview.md) — regime concept (the independent variable)
-- [world/regimes/socialism.md](world/regimes/socialism.md) — MVP run 01 regime
-- [world/regimes/monarchy.md](world/regimes/monarchy.md) — future run variant
-- [world/regimes/capitalism.md](world/regimes/capitalism.md) — future run variant
-- [world/religions/overview.md](world/religions/overview.md) — religions coexist in one village
+- [world/setting.md](world/setting.md) — the city (v2)
+- [world/economy.md](world/economy.md) — gold, materials, food, market, workplace mechanics
+- [world/regimes/overview.md](world/regimes/overview.md) — single regime (capitalism) after the v2 pivot
+- [world/regimes/capitalism.md](world/regimes/capitalism.md) — the regime in v2
+- [world/religions/overview.md](world/religions/overview.md) — Christianity + atheism, after retiring True Vine
 - [world/religions/christianity.md](world/religions/christianity.md) — established faith
-- [world/religions/true-vine.md](world/religions/true-vine.md) — reformist Christian cult
-- [world/religions/atheism.md](world/religions/atheism.md) — rationalist stance, no figurehead
+- [world/religions/atheism.md](world/religions/atheism.md) — stance, no figurehead, two carriers (Bram + Nyssa)
 
 ## Agents — the cast
 
-- [agents/overview.md](agents/overview.md) — cast table and tension matrix
-- [agents/V1-eda.md](agents/V1-eda.md) — Eda, llama-villager, Christian
-- [agents/V2-bram.md](agents/V2-bram.md) — Bram, mistral-villager, atheist
-- [agents/V3-lior.md](agents/V3-lior.md) — Lior, qwen-villager, True Vine
-- [agents/N1-aldric.md](agents/N1-aldric.md) — Aldric, regime leader (socialist council chair for run 01)
-- [agents/N2-father-maro.md](agents/N2-father-maro.md) — Father Maro, Christian priest
-- [agents/N3-sister-velka.md](agents/N3-sister-velka.md) — Sister Velka, True Vine leader
+- [agents/overview.md](agents/overview.md) — cast table and tension/collaboration matrix
+- [agents/V1-tessa.md](agents/V1-tessa.md) — Tessa, baker, Christian
+- [agents/V2-bram.md](agents/V2-bram.md) — Bram, doctor, atheist
+- [agents/V3-lior.md](agents/V3-lior.md) — Lior, apprentice carpenter, Christian
+- [agents/N1-aldric.md](agents/N1-aldric.md) — Aldric Vance, mill & workshop owner, Christian
+- [agents/N2-father-maro.md](agents/N2-father-maro.md) — Father Maro, parish priest, Christian
+- [agents/N3-nyssa.md](agents/N3-nyssa.md) — Nyssa Velkin, newspaper editor, atheist
 
 ## Experiments — research design
 
@@ -46,6 +43,7 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 ## Runs — raw simulation outputs
 
 - [runs/README.md](runs/README.md) — explanation of run-directory layout
+- `runs/2026-05-26_socialism_run01/` — village + socialism (last v1 run; preserved as raw)
 
 ## Decisions — ADRs for load-bearing choices
 
@@ -58,3 +56,4 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 - [decisions/006-bifurcated-persona-with-reflection.md](decisions/006-bifurcated-persona-with-reflection.md) — immutable core + mutable current-state via weekly reflection
 - [decisions/007-mvp-cast-size.md](decisions/007-mvp-cast-size.md) — 3 villagers + 3 NPCs for initial setup
 - [decisions/008-ollama-cloud-and-zod-boundary.md](decisions/008-ollama-cloud-and-zod-boundary.md) — Ollama Cloud + .env secrets + Zod at boundaries
+- [decisions/009-city-capitalism-christian-pivot.md](decisions/009-city-capitalism-christian-pivot.md) — v2 pivot: city + capitalism + (Christian/atheist) cast; retire TrueVine + socialism + monarchy

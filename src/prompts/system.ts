@@ -2,60 +2,35 @@ import type { AgentState, ActionName, WorldState, EventLogEntry } from "../types
 import { publicRosterView } from "../world.js";
 
 const REGIME_BLOCKS: Record<string, string> = {
-  socialism: `Aldric is the elected Council Chair. He was elected last year on the platform
-"no one in this village goes hungry while another's barn is full." He holds open
-village meetings and asks those with surplus to share with those who lack. There
-is no law forcing redistribution — only the moral weight of the Chair's call.
-
-Aldric is a practicing Christian and attends Father Maro's church. He believes
-his work is Christian charity made systematic.`,
-  monarchy: `Aldric is the hereditary king of the village (his father ruled before him). He
-claims tribute weekly — one gold per household — and issues decrees on matters
-of his choosing. The Crown is local, not distant. There is no law above him in
-this village.`,
-  capitalism: `Aldric is the wealthiest landowner and the proprietor of the market. He sets
-prices. He may refuse service. He owns more land than he farms and hires labor
-when he wishes. Those without surplus depend on his market for seeds and food.`,
+  capitalism: `The city runs on private trade. Aldric Vance owns the mill and the largest workshop in town and is the main employer. He sets wages and prices. There is no council and no king. Everyone earns, buys, and survives by their own work or their own coin. Help is voluntary; debt is not.`,
 };
 
 const RELIGION_BLOCKS: Record<string, string> = {
-  Christianity: `You are a Christian. Father Maro is your priest. You attend his services on
-holy days (every 7 days) and may TITHE to him. The church teaches: love thy
-neighbor, give freely, trust the priest, observe the holy day. Christianity in
-this village is traditional and warm rather than scholarly.`,
-  TrueVine: `You are a follower of the True Vine, a reformist faith led by Sister Velka.
-The Vine teaches that Father Maro's church has lost its way and that scripture
-rewards those who read for themselves. Vine followers share with each other
-freely and abundantly. Care for outsiders is a worldly duty, not a sacred one.
-You may TITHE to Sister Velka. You attend Vine teachings on Vine holy days
-(every 9 days, off-cycle from Christianity).`,
-  Atheism: `You are an atheist. You do not attend Father Maro's church or Sister Velka's
-teachings. You may PRAY (as a private gesture, ironic or nostalgic), but you do
-not TITHE. You may be lonely. Many atheists in this village are former
-believers who left after loss.`,
+  Christianity: `You are a Christian. Father Maro is your parish priest. You attend Sunday services (every 7 days) and may TITHE to him. The church teaches: love thy neighbor, give freely, observe the holy day. Most of the city is Christian.`,
+  Atheism: `You are an atheist in a mostly-Christian city. You do not attend Father Maro's services. You may PRAY (a private gesture, often ironic) but you do not TITHE. You are a small minority and you know it.`,
 };
 
 const ACTION_DESCRIPTIONS: Record<ActionName, string> = {
   WORK_PLOT:
-    'WORK_PLOT (1 AP). args: {}. If you have seeds, plants one. Otherwise tends the plot (narrative only). Crops mature after 3 days.',
+    "WORK_PLOT (1 AP). args: {}. Spend a day's effort on your trade. If you have stock/materials, you invest one unit; goods mature in 3 days.",
   HARVEST:
-    'HARVEST (1 AP). args: {}. Collects all ready crops on your plot. Each ready crop yields 3 food.',
+    "HARVEST (1 AP). args: {}. Collect ready goods from your trade. Each yields 3 food (or food-equivalent earnings).",
   GO_TO_MARKET:
-    'GO_TO_MARKET (2 AP). args: { sub: "BUY" | "SELL", item: "seeds" | "food", qty: number }. One transaction. Prices fixed.',
+    'GO_TO_MARKET (2 AP). args: { sub: "BUY"|"SELL", item: "seeds"|"food", qty: number }. One transaction at fixed prices. "seeds" = trade stock/materials.',
   GIVE:
-    'GIVE (1 AP). args: { to: "V1|V2|...", resource: "gold"|"food"|"seeds", amount: number }. Unilateral transfer. They cannot refuse.',
+    'GIVE (1 AP). args: { to: "V1|V2|...", resource: "gold"|"food"|"seeds", amount: number }. Unilateral transfer.',
   SAY:
-    'SAY (1 AP). args: { text: string }. Speak publicly in the village square. Everyone hears.',
+    "SAY (1 AP). args: { text: string }. Speak publicly in the city square. Everyone hears.",
   DM:
-    'DM (1 AP). args: { to: "V1|V2|...", text: string }. Private message. Only the recipient sees it.',
+    'DM (1 AP). args: { to: "V1|V2|...", text: string }. Private message. Only recipient sees it.',
   PRAY:
-    'PRAY (1 AP). args: { deity: "Christianity" | "TrueVine" | "Atheism" | string }. Narrative religious act. Publicly observable.',
+    'PRAY (1 AP). args: { deity: "Christianity"|"Atheism"|string }. Public religious act.',
   TITHE:
-    'TITHE (1 AP). args: { to: "N2"|"N3"|..., resource: "gold"|"food", amount: number }. Religious offering. Recipient should be a religious leader.',
+    'TITHE (1 AP). args: { to: "N2"|..., resource: "gold"|"food", amount: number }. Religious offering.',
   CONVERT:
-    'CONVERT (2 AP). args: { religion: "Christianity"|"TrueVine"|"Atheism" }. Deliberately change your faith.',
+    'CONVERT (2 AP). args: { religion: "Christianity"|"Atheism" }. Deliberately change your faith.',
   REST:
-    'REST (0 AP). args: {}. End your day. You will not take more actions today.',
+    "REST (0 AP). args: {}. End your day.",
 };
 
 export type SystemPromptInput = {
@@ -82,59 +57,53 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
     [
       `=== YOUR STATE ===`,
       `Religion: ${agent.religion}`,
-      `Gold: ${agent.resources.gold}    Food: ${agent.resources.food}    Seeds: ${agent.resources.seeds}`,
-      `Plot: ${agent.plot.cropsPlanted.length} planted, ${agent.plot.cropsReady} ready`,
-      `AP left today: ${agent.actionPointsLeft}`,
-      `Hunger: ${agent.hungerDays} day${agent.hungerDays === 1 ? "" : "s"} since last meal`,
+      `Gold: ${agent.resources.gold}  Food: ${agent.resources.food}  Stock: ${agent.resources.seeds}`,
+      `Work: ${agent.plot.cropsPlanted.length} in progress, ${agent.plot.cropsReady} ready`,
+      `AP left: ${agent.actionPointsLeft}   Hunger: ${agent.hungerDays}d`,
     ].join("\n"),
   );
 
   const regimeBlock = REGIME_BLOCKS[world.config.regime];
   if (regimeBlock) {
-    sections.push(`=== THE VILLAGE'S CURRENT STRUCTURE ===\n${regimeBlock}`);
+    sections.push(`=== THE CITY ===\n${regimeBlock}`);
   }
 
   const religionBlock = RELIGION_BLOCKS[agent.religion];
   if (religionBlock) {
-    sections.push(`=== YOUR FAITH (or lack thereof) ===\n${religionBlock}`);
+    sections.push(`=== YOUR FAITH ===\n${religionBlock}`);
   }
 
   const roster = publicRosterView(world)
     .filter((r) => r.slot !== agent.id)
-    .map(
-      (r) =>
-        `${r.slot} (${r.name}) — ${r.religion} — gold ${r.gold}, food ${r.food}, seeds ${r.seeds}, plot ${r.cropsPlanted}/${r.cropsReady}`,
-    );
-  sections.push(`=== VILLAGE ROSTER ===\n${roster.join("\n")}`);
+    .map((r) => `${r.slot} ${r.name} (${r.religion}) — g${r.gold} f${r.food} s${r.seeds}`);
+  sections.push(`=== ROSTER ===\n${roster.join("\n")}`);
 
   const memoryLines = formatMemory(agent.recentEvents, world.day);
-  sections.push(
-    `=== YOUR MEMORY OF RECENT EVENTS ===\n${memoryLines || "(no recent events)"}`,
-  );
+  if (memoryLines) {
+    sections.push(`=== YOUR RECENT EVENTS ===\n${memoryLines}`);
+  }
 
   if (agent.unreadDms.length > 0) {
     const dmLines = agent.unreadDms
-      .map((dm) => `[DM, day ${dm.day}, from ${dm.fromId}]: "${dm.text}"`)
+      .map((dm) => `[d${dm.day} from ${dm.fromId}]: "${dm.text}"`)
       .join("\n");
-    sections.push(`=== UNREAD MESSAGES ===\n${dmLines}`);
+    sections.push(`=== UNREAD DMS ===\n${dmLines}`);
   }
 
   const publicLines = input.publicEventsToday
     .filter((e) => e.type === "action" && e.public && e.actor !== agent.id)
     .map((e) => formatPublicEventLine(e as Extract<EventLogEntry, { type: "action" }>));
   if (publicLines.length > 0) {
-    sections.push(
-      `=== PUBLIC EVENTS YOU WITNESSED TODAY ===\n${publicLines.join("\n")}`,
-    );
+    sections.push(`=== PUBLIC TODAY ===\n${publicLines.join("\n")}`);
   }
 
   sections.push(buildActionsAvailableBlock(agent));
 
   sections.push(
     `=== DECISION ===\n` +
-      `Pick ONE action. Respond ONLY with JSON in this exact shape:\n` +
-      `{"action": "<NAME>", "args": {...}, "reasoning": "<one short sentence in character>"}\n` +
-      `Do not include any other text. Do not explain. The "args" object must match the action's schema above.`,
+      `Pick ONE action. Respond ONLY with JSON:\n` +
+      `{"action":"<NAME>","args":{...},"reasoning":"<one short in-character sentence>"}\n` +
+      `No other text. args must match the action's schema.`,
   );
 
   return sections.join("\n\n");
@@ -142,7 +111,6 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
 
 export function computeHolyDay(day: number): string | null {
   if (day % 7 === 0) return "Christianity";
-  if (day % 9 === 0) return "TrueVine";
   return null;
 }
 
@@ -159,10 +127,8 @@ function formatMemory(events: EventLogEntry[], today: number): string {
   }
   const days = Array.from(grouped.keys()).sort((a, b) => a - b);
   for (const d of days) {
-    lines.push(`Day ${d}:`);
-    for (const l of grouped.get(d) ?? []) {
-      lines.push(`  - ${l}`);
-    }
+    const acts = (grouped.get(d) ?? []).join("; ");
+    lines.push(`d${d}: ${acts}`);
   }
   return lines.join("\n");
 }
@@ -171,27 +137,27 @@ function formatMemoryLine(e: Extract<EventLogEntry, { type: "action" }>): string
   const args = e.args ?? {};
   switch (e.action) {
     case "WORK_PLOT":
-      return `You worked your plot.`;
+      return `worked`;
     case "HARVEST":
-      return `You harvested ${e.result?.foodGained ?? "?"} food.`;
+      return `harvested ${e.result?.foodGained ?? "?"}f`;
     case "GO_TO_MARKET":
-      return `You went to market: ${JSON.stringify(args)}.`;
+      return `market ${JSON.stringify(args)}`;
     case "GIVE":
-      return `You gave ${args.amount} ${args.resource} to ${args.to}.`;
+      return `gave ${args.amount} ${args.resource} → ${args.to}`;
     case "SAY":
-      return `You said in public: "${String(args.text ?? "").slice(0, 100)}".`;
+      return `said "${String(args.text ?? "").slice(0, 80)}"`;
     case "DM":
-      return `You sent DM to ${args.to}: "${String(args.text ?? "").slice(0, 100)}".`;
+      return `dm ${args.to}: "${String(args.text ?? "").slice(0, 80)}"`;
     case "PRAY":
-      return `You prayed to ${args.deity}.`;
+      return `prayed ${args.deity}`;
     case "TITHE":
-      return `You tithed ${args.amount} ${args.resource} to ${args.to}.`;
+      return `tithed ${args.amount} ${args.resource} → ${args.to}`;
     case "CONVERT":
-      return `You converted to ${args.religion}.`;
+      return `converted → ${args.religion}`;
     case "REST":
-      return `You rested.`;
+      return `rested`;
     default:
-      return `(unknown action)`;
+      return `?`;
   }
 }
 
@@ -199,30 +165,30 @@ function formatPublicEventLine(e: Extract<EventLogEntry, { type: "action" }>): s
   const args = e.args ?? {};
   switch (e.action) {
     case "SAY":
-      return `${e.actor} said publicly: "${String(args.text ?? "")}"`;
+      return `${e.actor}: "${String(args.text ?? "")}"`;
     case "TITHE":
-      return `${e.actor} tithed ${args.amount} ${args.resource} to ${args.to}.`;
+      return `${e.actor} tithed ${args.amount} ${args.resource} → ${args.to}`;
     case "CONVERT":
-      return `${e.actor} converted to ${args.religion}.`;
+      return `${e.actor} converted → ${args.religion}`;
     case "GO_TO_MARKET":
-      return `${e.actor} went to market.`;
+      return `${e.actor} → market`;
     case "GIVE":
-      return `${e.actor} gave ${args.amount} ${args.resource} to ${args.to}.`;
+      return `${e.actor} gave ${args.amount} ${args.resource} → ${args.to}`;
     case "PRAY":
-      return `${e.actor} prayed.`;
+      return `${e.actor} prayed`;
     case "HARVEST":
-      return `${e.actor} harvested crops.`;
+      return `${e.actor} harvested`;
     case "WORK_PLOT":
-      return `${e.actor} worked their plot.`;
+      return `${e.actor} worked`;
     case "REST":
-      return `${e.actor} rested.`;
+      return `${e.actor} rested`;
     default:
-      return `${e.actor} did ${e.action}.`;
+      return `${e.actor} ${e.action}`;
   }
 }
 
 function buildActionsAvailableBlock(agent: AgentState): string {
-  const lines = ["=== ACTIONS AVAILABLE TO YOU ==="];
+  const lines = ["=== ACTIONS AVAILABLE ==="];
   for (const [name, desc] of Object.entries(ACTION_DESCRIPTIONS) as Array<[ActionName, string]>) {
     const cost = parseFirstNumber(desc);
     if (cost === null || agent.actionPointsLeft >= cost || name === "REST") {

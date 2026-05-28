@@ -1,10 +1,12 @@
 # World — Economy
 
 **Status:** stable
-**Last updated:** 2026-05-26
+**Last updated:** 2026-05-28
 **Related:** [setting](setting.md), [../design/action-set](../design/action-set.md), [../design/turn-mechanics](../design/turn-mechanics.md)
 
 Three resources, one market, one survival pressure. Designed to be just complex enough that scarcity matters and just simple enough that the engine fits in 50 lines.
+
+> **v2 reframing.** The same three-resource loop now sits beneath six distinct *jobs* (baker, doctor, carpenter, mill owner, priest, editor). The engine is unchanged — `plot` is the agent's workplace, `seeds` is their stock/materials, `crops` are goods in progress, `food` is the staple they (and everyone) needs to eat. Jobs are narrative; the math is the same.
 
 ## Resources
 

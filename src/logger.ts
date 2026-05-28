@@ -147,7 +147,5 @@ export class RunLogger {
 }
 
 function shortRole(role: string): string {
-  if (role === "regime-leader") return "regime";
-  if (role === "cult-leader") return "cult";
   return role;
 }

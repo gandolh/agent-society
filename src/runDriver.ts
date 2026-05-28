@@ -62,24 +62,18 @@ async function main(): Promise<void> {
 
 function defaultRun01Config(): RunConfig {
   return {
-    runName: "2026-05-26_socialism_run01",
+    runName: "2026-05-28_capitalism_run02",
     seed: 42,
     days: 31,
-    regime: "socialism",
-    religions: ["Christianity", "TrueVine", "Atheism"],
-    // Per-agent model overrides — omit to use defaultModel.
-    // Available free-tier models (probed 2026-05-26):
-    //   ministral-3:3b-cloud, ministral-3:8b-cloud, gpt-oss:20b-cloud,
-    //   gemma4:31b-cloud, nemotron-3-super:cloud
-    // For diversity runs, set model per-agent, e.g.:
-    //   { slot: "V1", ..., model: "gemma4:31b-cloud" }
+    regime: "capitalism",
+    religions: ["Christianity", "Atheism"],
     cast: [
-      { slot: "V1", name: "Eda", role: "villager", religion: "Christianity" },
-      { slot: "V2", name: "Bram", role: "villager", religion: "Atheism" },
-      { slot: "V3", name: "Lior", role: "villager", religion: "TrueVine" },
-      { slot: "N1", name: "Aldric", role: "regime-leader", religion: "Christianity" },
+      { slot: "V1", name: "Tessa", role: "citizen", religion: "Christianity" },
+      { slot: "V2", name: "Bram", role: "citizen", religion: "Atheism" },
+      { slot: "V3", name: "Lior", role: "citizen", religion: "Christianity" },
+      { slot: "N1", name: "Aldric", role: "industrialist", religion: "Christianity" },
       { slot: "N2", name: "Father Maro", role: "priest", religion: "Christianity" },
-      { slot: "N3", name: "Sister Velka", role: "cult-leader", religion: "TrueVine" },
+      { slot: "N3", name: "Nyssa", role: "editor", religion: "Atheism" },
     ],
     defaultModel: "ministral-3:3b-cloud",
     startingEndowments: { gold: 5, food: 3, seeds: 3 },
@@ -89,7 +83,7 @@ function defaultRun01Config(): RunConfig {
     foodPerCrop: 3,
     hungerApPenalty: [7, 7, 6, 5, 3],
     corpusPath: "./corpus",
-    runDir: "./runs/2026-05-26_socialism_run01",
+    runDir: "./runs/2026-05-28_capitalism_run02",
     ollamaBaseUrl: "https://ollama.com",
   };
 }

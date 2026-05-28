@@ -1,14 +1,14 @@
 import { z } from "zod";
 
-export const ReligionSchema = z.enum(["Christianity", "TrueVine", "Atheism"]);
+export const ReligionSchema = z.enum(["Christianity", "Atheism"]);
 
-export const RegimeSchema = z.enum(["socialism", "monarchy", "capitalism"]);
+export const RegimeSchema = z.enum(["capitalism"]);
 
 export const AgentRoleSchema = z.enum([
-  "villager",
-  "regime-leader",
+  "citizen",
+  "industrialist",
   "priest",
-  "cult-leader",
+  "editor",
 ]);
 
 export const ResourcesSchema = z.object({

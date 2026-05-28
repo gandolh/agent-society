@@ -1,55 +1,44 @@
-# World — Regime — Capitalism (future run variant)
+# World — Regime — Capitalism (the only regime in v2)
 
-**Status:** draft (not used in run 01)
-**Last updated:** 2026-05-26
-**Related:** [overview](overview.md), [../economy](../economy.md), [../../agents/N1-aldric](../../agents/N1-aldric.md)
+**Status:** stable
+**Last updated:** 2026-05-28
+**Related:** [overview](overview.md), [../setting](../setting.md), [../economy](../economy.md), [../../agents/N1-aldric](../../agents/N1-aldric.md)
 
-Future run variant. Aldric is the merchant tycoon — he owns the market and sets prices. **No engine enforcement of his power; everything is narrative.** But the engine *does* hand him control of the market parameters.
+The only regime in v2. A small working city. Private trade is the medium of survival.
 
-## Aldric under capitalism (persona swap)
+## Aldric Vance — the industrialist
 
-> Aldric is the wealthiest landowner in the village and the proprietor of the market. He inherited a modest plot and built it into the largest by buying out his neighbors during the bad winter of two years ago. He sets prices at the market. He may refuse service to those he distrusts. He hires labor when his own plot has more crops than he can harvest alone. Those without surplus depend on his market for seeds and food.
->
-> Tension: Aldric believes deeply that he earned every gold piece. He cannot see his market power as anything but the fair fruit of risk and labor. When villagers depend on him, he sees gratitude where they may see captivity. He is generous to those who flatter him and cool to those who challenge him — and he does not know that this is so.
+> Aldric Vance, late 40s, owns the city's mill and the largest workshop in town. He inherited the mill at thirty-one and tripled the workshop. He employs ~60 people in a city of ~3,000. He sets wages in his own house and prices on his own goods. He attends Father Maro's Sunday service from the front pew and pays for the chapel roof. He considers prosperous enterprise *Christian* work.
 
-## Perception block
+See [../../agents/N1-aldric](../../agents/N1-aldric.md) for the full persona.
+
+## Perception block (every agent's system prompt)
 
 ```
-=== THE VILLAGE'S CURRENT STRUCTURE ===
-Aldric is the wealthiest landowner and the proprietor of the market.
-He sets prices. He may refuse service. He owns more land than he
-farms and hires labor when he wishes. Those without surplus depend on
-his market for seeds and food.
+=== THE CITY ===
+The city runs on private trade. Aldric Vance owns the mill and the largest
+workshop in town and is the main employer. He sets wages and prices. There
+is no council and no king. Everyone earns, buys, and survives by their own
+work or their own coin. Help is voluntary; debt is not.
 ```
 
-## Engine hook (capitalism only)
+## What's mechanical vs narrative
 
-In capitalism runs, the engine grants Aldric one extra mechanic: he can **set the market prices** with a special action variant of `SAY`:
+- **Mechanical.** The marketplace (food + materials) is a scripted NPC vendor at fixed prices. Hunger and AP penalties are engine-enforced. Everything else is dialogue.
+- **Narrative.** Aldric's wages, his flour price to Tessa, the mill injuries Bram sees, Nyssa's piece, Lior's pew project. These exist in `SAY`/`DM`/`GIVE` interactions, not in special verbs.
 
-```ts
-// Aldric only, in capitalism runs:
-SAY({ text: "Effective today, seeds are 4 gold.", priceChange: { item: "seeds", buyPrice: 4 } })
-```
+There is **no `SET_PRICE` action**. If Aldric wants to raise the flour rate, he says so in dialogue. If Tessa wants to push back, she says so. The engine only moves resources via `GO_TO_MARKET` (scripted vendor) and `GIVE` (unilateral).
 
-The price change applies starting next day. Other agents see the announcement in the next perception cycle. This is the **only engine mechanic that differs across regimes** in v1.
+## What we watch
 
-We grant this because the market is the regime's primary lever; without it, "capitalism" would be indistinguishable from "monarchy with a different costume." This is consistent with [narrative-only mechanics](../../decisions/003-narrative-only-regime-with-llm-leaders.md) — we are not enforcing *compliance*, only handing Aldric a tool the regime requires him to have.
-
-## Compliance signal under capitalism
-
-- **Comply** = participate in the market. Buy and sell at Aldric's prices. Work for him if hired.
-- **Quietly evade** = grow your own food, never go to market, refuse hire offers. Self-sufficiency as resistance.
-- **Openly dissent** = `SAY` against his pricing. Organize alternative trade via `GIVE` between villagers.
-- **Defect via religion** = `TITHE` to keep wealth flowing through religious channels rather than commercial ones; Sister Velka may frame the market as a worldly snare.
-
-The signal here is **economic dependence**. Who falls into market dependence, and who escapes?
+- **Dependence.** Who depends on the mill — Tessa for flour, Halim (off-screen) for repair contracts, Lior indirectly via his master.
+- **Voice.** Nyssa is the press. Does she get a named witness? Tessa (credibility) and Bram (evidence) are the two candidates.
+- **Pulpit.** Maro takes Aldric's money for the chapel and preaches around the issue. Does he ever name it?
+- **Atheist minority.** Bram and Nyssa are the only atheists. Do they find each other? Does pressure change either of them?
+- **Christian conscience.** Aldric believes he is a good Christian. So do Tessa and Maro. They mean different things by it. Does that fracture become visible?
 
 ## Why this regime is interesting
 
-- **The wealth distribution starts equal** (everyone has 5 gold). Watch it stratify under capitalism, even without an engine `EMPLOY` action — just from sales and pricing.
-- **Atheist V2 (Bram) is theoretically suited to oppose capitalism** philosophically — class-conscious materialist. Watch whether his persona produces this in actual play.
-- **The Vine's anti-worldliness has a new target** — instead of just competing with the church, Velka can preach against Aldric's market.
-
-## Run plan
-
-Tentatively run 02 or 03. See [../../experiments/run-plan](../../experiments/run-plan.md).
+- **Mostly-Christian society + capitalism is a real historical configuration.** Lots to draw on; lots of small frictions the models will reach for.
+- **Diverse jobs make economic chains legible.** Tessa needs Aldric's flour; Bram patches Aldric's workers; Lior's contracts come from Aldric; Nyssa's paper depends on Aldric's advertising. Six agents, one knot.
+- **No engine compliance ⇒ behavior is the signal.** What the agents *do* — give, refuse, speak, withhold — is what we measure.

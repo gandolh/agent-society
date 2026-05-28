@@ -7,7 +7,7 @@ function isResource(s: unknown): s is Resource {
 }
 
 function isReligion(s: unknown): s is Religion {
-  return s === "Christianity" || s === "TrueVine" || s === "Atheism";
+  return s === "Christianity" || s === "Atheism";
 }
 
 function getAgent(world: WorldState, slot: unknown): AgentState | null {
@@ -177,7 +177,7 @@ const tithe: ActionHandler = (world, actor, args) => {
 const convert: ActionHandler = (_world, actor, args) => {
   const religion = args.religion;
   if (!isReligion(religion)) {
-    return { ok: false, error: "args.religion must be Christianity|TrueVine|Atheism.", apCost: 0 };
+    return { ok: false, error: "args.religion must be Christianity|Atheism.", apCost: 0 };
   }
   if (religion === actor.religion) {
     return { ok: false, error: "Already this religion.", apCost: 0 };
