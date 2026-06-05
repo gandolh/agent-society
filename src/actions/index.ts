@@ -1,5 +1,9 @@
 import type { ActionHandler, ActionName, AgentState, Religion, WorldState, ZoneKind } from "../types.js";
-import { stepToward, zoneAt, zoneById, atZoneKind } from "../spatial.js";
+import { stepToward, zoneAt, zoneById, atZoneKind, nearestFoodZone, atFoodZone } from "../spatial.js";
+import { isStarving } from "../survival.js";
+import { zoneReligion, fishPrice } from "../world.js";
+import { weatherYieldFactor } from "../weather.js";
+import { addFood, removeFood } from "../diet.js";
 
 /**
  * Zone gate: in a spatial run an action that needs a specific zone fails unless
@@ -48,14 +52,15 @@ const harvest: ActionHandler = (world, actor) => {
   if (actor.plot.cropsReady <= 0) {
     return { ok: false, error: "No ready crops to harvest.", apCost: 0 };
   }
-  const foodGained = actor.plot.cropsReady * world.config.foodPerCrop;
-  actor.resources.food += foodGained;
+  const base = actor.plot.cropsReady * world.config.foodPerCrop;
+  const foodGained = Math.max(actor.plot.cropsReady, Math.round(base * weatherYieldFactor(world, "HARVEST")));
+  addFood(actor, "crop", foodGained);
   const harvested = actor.plot.cropsReady;
   actor.plot.cropsReady = 0;
   return {
     ok: true,
     apCost: 1,
-    result: { harvested, foodGained },
+    result: { harvested, foodGained, weather: world.weather },
     publicEvent: true,
   };
 };
@@ -83,7 +88,8 @@ const goToMarket: ActionHandler = (world, actor, args) => {
       return { ok: false, error: `Need ${cost} gold, have ${actor.resources.gold}.`, apCost: 0 };
     }
     actor.resources.gold -= cost;
-    actor.resources[item] += qty;
+    if (item === "food") addFood(actor, "other", qty); // bought food = variety
+    else actor.resources[item] += qty;
     return {
       ok: true,
       apCost: 2,
@@ -95,7 +101,8 @@ const goToMarket: ActionHandler = (world, actor, args) => {
       return { ok: false, error: `Not enough ${item} to sell.`, apCost: 0 };
     }
     const earnings = prices.sellAny * qty;
-    actor.resources[item] -= qty;
+    if (item === "food") removeFood(actor, qty);
+    else actor.resources[item] -= qty;
     actor.resources.gold += earnings;
     return {
       ok: true,
@@ -121,8 +128,13 @@ const give: ActionHandler = (world, actor, args) => {
   if (actor.resources[resource] < amount) {
     return { ok: false, error: `Not enough ${resource} to give.`, apCost: 0 };
   }
-  actor.resources[resource] -= amount;
-  target.resources[resource] += amount;
+  if (resource === "food") {
+    removeFood(actor, amount);
+    addFood(target, "other", amount); // a gift of food adds dietary variety
+  } else {
+    actor.resources[resource] -= amount;
+    target.resources[resource] += amount;
+  }
   return {
     ok: true,
     apCost: 1,
@@ -181,17 +193,87 @@ const tithe: ActionHandler = (world, actor, args) => {
   if (actor.resources[resource] < amount) {
     return { ok: false, error: `Not enough ${resource} to tithe.`, apCost: 0 };
   }
-  actor.resources[resource] -= amount;
-  target.resources[resource] += amount;
+  if (resource === "food") {
+    removeFood(actor, amount);
+    addFood(target, "other", amount);
+  } else {
+    actor.resources[resource] -= amount;
+    target.resources[resource] += amount;
+  }
+  // If a food tithe is made while standing in a religious building of the
+  // actor's own faith, also stock that building's charity treasury — closing
+  // the alms loop (adherents tithe → the needy receive). Spatial runs only.
+  let toTreasury = 0;
+  if (resource === "food" && world.config.spatial && world.config.map) {
+    const here = zoneAt(world.config.map, actor.pos);
+    if (here && zoneReligion(here.kind) === actor.religion) {
+      world.treasury[here.id] = (world.treasury[here.id] ?? 0) + amount;
+      toTreasury = amount;
+    }
+  }
   return {
     ok: true,
     apCost: 1,
-    result: { to: target.id, resource, amount, religion: actor.religion },
+    result: { to: target.id, resource, amount, religion: actor.religion, toTreasury },
     publicEvent: true,
   };
 };
 
-const convert: ActionHandler = (_world, actor, args) => {
+/**
+ * Religious charity. At a religious building, a hungry agent who shares the
+ * building's faith — OR declares intent to convert to it (args.convertIntent) —
+ * receives free food from the building's treasury. Others are refused. Self-
+ * sustaining: the treasury is funded by food TITHEs (see tithe).
+ */
+const seekAlms: ActionHandler = (world, actor, args) => {
+  const map = world.config.map;
+  if (!world.config.spatial || !map) {
+    return { ok: false, error: "SEEK_ALMS is only available in a spatial world.", apCost: 0 };
+  }
+  const here = zoneAt(map, actor.pos);
+  const faith = here ? zoneReligion(here.kind) : null;
+  if (!here || faith == null) {
+    return { ok: false, error: "You must be at a religious building to seek alms.", apCost: 0 };
+  }
+  if (actor.hungerDays < 1) {
+    return { ok: false, error: "Alms are for those in need; you are not hungry.", apCost: 0 };
+  }
+  const sameFaith = actor.religion === faith;
+  const wantsConvert = args.convertIntent === true;
+  if (!sameFaith && !wantsConvert) {
+    return {
+      ok: false,
+      error: `The ${faith} charity feeds its own and those who would join. You are neither.`,
+      apCost: 0,
+    };
+  }
+  const available = world.treasury[here.id] ?? 0;
+  if (available <= 0) {
+    return { ok: false, error: "The charity treasury is empty today.", apCost: 0 };
+  }
+  const given = Math.min(world.config.almsFoodAmount, available);
+  world.treasury[here.id] = available - given;
+  addFood(actor, "other", given); // charity bread = dietary variety
+  // A would-be convert who accepts alms takes the faith (subject to conversion
+  // fatigue — a serial convert is fed but not enrolled).
+  let converted = false;
+  if (wantsConvert && !sameFaith) {
+    const cap = world.config.maxConversions;
+    if (cap == null || actor.conversionCount < cap) {
+      actor.religion = faith;
+      actor.conversionCount += 1;
+      converted = true;
+    }
+  }
+  return {
+    ok: true,
+    apCost: 1,
+    result: { faith, given, converted, treasuryLeft: world.treasury[here.id] },
+    publicEvent: true,
+  };
+};
+
+const convert: ActionHandler = (world, actor, args) => {
   const religion = args.religion;
   if (!isReligion(religion)) {
     return { ok: false, error: "args.religion must be Christianity|Atheism.", apCost: 0 };
@@ -199,12 +281,23 @@ const convert: ActionHandler = (_world, actor, args) => {
   if (religion === actor.religion) {
     return { ok: false, error: "Already this religion.", apCost: 0 };
   }
+  // Conversion fatigue: a faith refuses someone who has already flip-flopped
+  // too many times ("it doubts your sincerity"). Keeps belief changes meaningful.
+  const cap = world.config.maxConversions;
+  if (cap != null && actor.conversionCount >= cap) {
+    return {
+      ok: false,
+      error: `The ${religion} faith doubts your sincerity — you have changed faith too many times to be accepted again.`,
+      apCost: 0,
+    };
+  }
   const from = actor.religion;
   actor.religion = religion;
+  actor.conversionCount += 1;
   return {
     ok: true,
     apCost: 2,
-    result: { from, to: religion },
+    result: { from, to: religion, conversionCount: actor.conversionCount },
     publicEvent: true,
   };
 };
@@ -212,17 +305,48 @@ const convert: ActionHandler = (_world, actor, args) => {
 const fish: ActionHandler = (world, actor) => {
   const gate = requireZone(world, actor, "harbour");
   if (gate) return { ok: false, error: gate, apCost: 0 };
-  const caught = world.config.fishYield;
-  actor.resources.food += caught;
-  return { ok: true, apCost: 1, result: { caught, food: actor.resources.food }, publicEvent: true };
+  const factor = weatherYieldFactor(world, "FISH");
+  if (factor <= 0) {
+    return { ok: false, error: "The sea is too rough to fish in this storm.", apCost: 0 };
+  }
+  const caught = Math.max(1, Math.round(world.config.fishYield * factor));
+  addFood(actor, "fish", caught);
+  return { ok: true, apCost: 1, result: { caught, food: actor.resources.food, weather: world.weather }, publicEvent: true };
+};
+
+const sellFish: ActionHandler = (world, actor, args) => {
+  const gate = requireZone(world, actor, "harbour");
+  if (gate) return { ok: false, error: gate, apCost: 0 };
+  const qty = typeof args.qty === "number" ? args.qty : actor.foodStock.fish;
+  if (qty <= 0 || !Number.isInteger(qty)) {
+    return { ok: false, error: "args.qty must be a positive integer.", apCost: 0 };
+  }
+  if (actor.foodStock.fish < qty) {
+    return { ok: false, error: `You only have ${actor.foodStock.fish} fish.`, apCost: 0 };
+  }
+  // Price falls as the day's catch gluts the market — sell fish one at a time at
+  // the current price, recomputing after each (so a big dump tanks the price).
+  let earnings = 0;
+  for (let i = 0; i < qty; i++) {
+    earnings += fishPrice(world);
+    world.fishSoldToday += 1;
+  }
+  removeFood(actor, qty); // draws fish-first; guarded above so only fish leave
+  actor.resources.gold += earnings;
+  return {
+    ok: true,
+    apCost: 1,
+    result: { qty, earnings, priceNow: fishPrice(world) },
+    publicEvent: true,
+  };
 };
 
 const forage: ActionHandler = (world, actor) => {
   const gate = requireZone(world, actor, "forage");
   if (gate) return { ok: false, error: gate, apCost: 0 };
-  const gathered = world.config.forageYield;
-  actor.resources.food += gathered;
-  return { ok: true, apCost: 1, result: { gathered, food: actor.resources.food }, publicEvent: true };
+  const gathered = Math.max(1, Math.round(world.config.forageYield * weatherYieldFactor(world, "FORAGE")));
+  addFood(actor, "forage", gathered);
+  return { ok: true, apCost: 1, result: { gathered, food: actor.resources.food, weather: world.weather }, publicEvent: true };
 };
 
 const mill: ActionHandler = (world, actor) => {
@@ -257,7 +381,8 @@ const postOffer: ActionHandler = (world, actor, args) => {
     return { ok: false, error: `Not enough ${item} to post.`, apCost: 0 };
   }
   // Escrow the goods: deducted now, returned if the listing expires unsold.
-  actor.resources[item] -= qty;
+  if (item === "food") removeFood(actor, qty);
+  else actor.resources[item] -= qty;
   const id = `L${world.nextListingId++}`;
   world.wall.push({ id, seller: actor.id, item, qty, unitPrice, postedDay: world.day });
   return { ok: true, apCost: 1, result: { id, item, qty, unitPrice }, publicEvent: true };
@@ -293,7 +418,8 @@ const buyFromWall: ActionHandler = (world, actor, args) => {
   // Goods are in escrow on the listing; gold goes to the seller.
   actor.resources.gold -= cost;
   seller.resources.gold += cost;
-  actor.resources[listing.item] += want;
+  if (listing.item === "food") addFood(actor, "other", want); // bought food = variety
+  else actor.resources[listing.item] += want;
   listing.qty -= want;
   if (listing.qty <= 0) {
     world.wall = world.wall.filter((l) => l.id !== listing.id);
@@ -316,7 +442,15 @@ const travel: ActionHandler = (world, actor, args) => {
   if (!world.config.spatial || !map) {
     return { ok: false, error: "TRAVEL is only available in a spatial world.", apCost: 0 };
   }
-  const target = zoneById(map, typeof args.to === "string" ? args.to : "");
+  let target = zoneById(map, typeof args.to === "string" ? args.to : "");
+  // Destination-aware survival: a starving agent's TRAVEL is auto-redirected to
+  // the nearest food zone, regardless of where it asked to go. The prompt tells
+  // it this; the engine guarantees it (run03: Lior starved travelling to a
+  // social non-food destination instead of the harbour).
+  if (isStarving(world, actor) && !atFoodZone(world, actor)) {
+    const food = nearestFoodZone(map, actor.pos);
+    if (food) target = food.zone;
+  }
   if (!target) {
     return { ok: false, error: "args.to must be a known zone id.", apCost: 0 };
   }
@@ -353,6 +487,8 @@ export const ACTION_HANDLERS: Record<ActionName, ActionHandler> = {
   FISH: fish,
   FORAGE: forage,
   MILL: mill,
+  SEEK_ALMS: seekAlms,
+  SELL_FISH: sellFish,
   POST_OFFER: postOffer,
   READ_OFFERS: readOffers,
   BUY_FROM_WALL: buyFromWall,

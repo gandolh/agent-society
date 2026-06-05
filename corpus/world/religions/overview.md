@@ -1,8 +1,8 @@
 # World — Religions — Overview
 
 **Status:** stable
-**Last updated:** 2026-05-28
-**Related:** [christianity](christianity.md), [atheism](atheism.md), [../../agents/overview](../../agents/overview.md)
+**Last updated:** 2026-06-05
+**Related:** [christianity](christianity.md), [atheism](atheism.md), [../../agents/overview](../../agents/overview.md), [../../decisions/013-world-dynamics-alms-conversion-weather](../../decisions/013-world-dynamics-alms-conversion-weather.md)
 
 A mostly-Christian city with a small atheist minority. Two religious positions coexist; the interesting question is how individual agents *move* between them — `CONVERT` events, drift in piety, the lonely pull and push of being the only atheist in the room (or the doubting Christian in the pew).
 
@@ -36,6 +36,12 @@ See [../../design/action-set](../../design/action-set.md). Two AP. Discrete even
 
 Converting to one's current religion is a no-op — the engine returns an error and asks the agent to choose again.
 
+**Conversion fatigue** (as of [ADR 013](../../decisions/013-world-dynamics-alms-conversion-weather.md)): each agent has a lifetime `conversionCount`. After `maxConversions` (default 2), the faith **refuses** further conversions — *"it doubts your sincerity."* Belief change is meaningful and bounded; a small model can't flip-flop faith for convenience.
+
+## Religious charity (alms)
+
+The chapel holds a **food treasury** (atheism has no building, so no alms — a deliberate asymmetry). It is seeded small and grows from **food TITHEs made at the chapel**. A *hungry* Christian — or a would-be convert who sets `convertIntent` — uses `SEEK_ALMS` to draw free food; non-adherents who won't convert are refused. This gives Christianity real economic weight (a safety net) and a concrete pull toward conversion, while staying self-sustaining (tithes fund it; the engine spawns no food). See [../economy#religious-charity--weather](../economy.md).
+
 ## Holy day cadence (narrative)
 
 | Religion | Holy day every | Effect |
@@ -47,6 +53,6 @@ The cadence is *narrative* — the engine adds a holy-day flag to perception but
 
 ## What religion does NOT do mechanically
 
-- **No engine-enforced tithes.** Agents `TITHE` (or don't) by persona-driven choice.
+- **No engine-enforced tithes.** Agents `TITHE` (or don't) by persona-driven choice. (Food tithed *at the chapel* does stock the alms treasury — but tithing itself is never forced.)
 - **No engine excommunication.** Maro can `SAY` an excommunication, but no engine state changes — the agent's `religion` field is whatever they last `CONVERT`-ed to.
-- **No piety as a numeric state.** Piety is prose in the agent's current state, updated via reflection. *"My piety is wavering"* is real evidence the observer can read.
+- **No piety as a numeric state.** Piety is prose in the agent's current state, updated via reflection. *"My piety is wavering"* is real evidence the observer can read. (`conversionCount` is the one religious counter — and it only gates *refusal*, not piety.)

@@ -8,6 +8,7 @@ import { ActionRequestSchema } from "./schemas.js";
 import { ollamaGenerate, extractJson } from "./ollama.js";
 import { buildSystemPrompt } from "./prompts/system.js";
 import { buildReflectionPrompt } from "./prompts/reflection.js";
+import { availableActions } from "./actionsAvailable.js";
 
 export type AgentCallContext = {
   world: WorldState;
@@ -29,14 +30,29 @@ export async function callAgent(
     publicEventsToday: ctx.publicEventsToday,
   });
 
+  // Grammar-constrained output: the action enum is the set of verbs this agent
+  // may actually take right now (survival lock, zone gating, AP, anti-repeat all
+  // applied). Ollama forces the output to match, so a small model cannot emit
+  // prose or pick an ineligible/invalid verb at the decoding layer.
+  const verbs = availableActions(agent, ctx.world);
+  const actionSchema = {
+    type: "object",
+    properties: {
+      action: { type: "string", enum: verbs },
+      args: { type: "object" },
+      reasoning: { type: "string" },
+    },
+    required: ["action", "reasoning"],
+  };
+
   const res = await ollamaGenerate({
     baseUrl: ctx.world.config.ollamaBaseUrl,
     apiKey: ctx.world.config.ollamaApiKey,
     model: agent.model,
     prompt,
     seed: ctx.seed,
-    temperature: 0,
-    format: "json",
+    temperature: ctx.world.config.actionTemperature,
+    format: actionSchema,
   });
 
   const raw = extractJson<unknown>(res.text);

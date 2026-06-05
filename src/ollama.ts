@@ -4,7 +4,13 @@ export type OllamaCallOptions = {
   prompt: string;
   seed: number;
   temperature?: number;
-  format?: "json";
+  /**
+   * Output format. "json" = free-form JSON mode. A JSON-schema object enables
+   * grammar-constrained decoding — Ollama forces the output to match the schema
+   * (incl. enum constraints), so a small model literally cannot emit prose or an
+   * invalid action verb. See https://ollama.com/blog/structured-outputs.
+   */
+  format?: "json" | Record<string, unknown>;
   /** Max attempts on connection error. */
   retries?: number;
   /**

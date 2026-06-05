@@ -34,6 +34,10 @@ See [ADR 012](../decisions/012-ocean-town-spatial-capabilities-economy.md) and t
 | `POST_OFFER(item, qty, unitPrice)` | 1 | At the market: list food/seeds for sale on the wall (goods held in escrow). |
 | `READ_OFFERS` | 1 | At the market: review current wall offers (also injected into perception there). |
 | `BUY_FROM_WALL(id, qty)` | 3 | At the market: buy from a wall listing; gold→seller, goods→you. |
+| `SEEK_ALMS({convertIntent?})` | 1 | At a religious building: a *hungry* adherent (or would-be convert) gets free food from the faith's treasury. See [ADR 013](../decisions/013-world-dynamics-alms-conversion-weather.md). |
+| `SELL_FISH(qty)` | 1 | At the harbour: sell fish to the fishmonger for gold; price **falls as more fish are sold that day**. See [ADR 014](../decisions/014-diet-variety-and-fishmonger.md). |
+
+> **Diet variety** ([ADR 014](../decisions/014-diet-variety-and-fishmonger.md)): food now has provenance (fish/crop/forage/other). Eating the same type repeatedly only partially satisfies hunger — agents must eat a varied diet, which is the main pressure breaking "just fish forever."
 
 ## Action response schema
 

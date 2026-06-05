@@ -41,11 +41,15 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 - [experiments/hypotheses.md](experiments/hypotheses.md) — what we're trying to learn (v2 cast)
 - [experiments/run-plan.md](experiments/run-plan.md) — planned matrix of runs (capitalism, model/seed sweep)
 - [experiments/related-work.md](experiments/related-work.md) — relevant papers + prioritised improvement levers (why run 01 collapsed)
+- [experiments/design-questions-2026-06-05.md](experiments/design-questions-2026-06-05.md) — analysis + recommendations: agent count, farming tuning, new NPCs, world dynamics
 
 ## Runs — summaries (raw outputs live in repo-root `runs/`)
 
 - [runs/README.md](runs/README.md) — raw vs. summary layers; run-directory layout
 - [runs/2026-05-26_socialism_run01-summary.md](runs/2026-05-26_socialism_run01-summary.md) — first v1 run; **failed** via homogeneous "poetic sycophancy" (469 SAY, ~0 economic actions, whole cast starving). Motivated the v2 pivot.
+- [runs/2026-06-05_capitalism_spatial_run01-summary.md](runs/2026-06-05_capitalism_spatial_run01-summary.md) — first ocean-town spatial run; **partial success**: no register collapse, personas held + moved between zones, but 0 economic actions and the whole cast starved (small-model survival-blindness). Justifies survival enforcement.
+- [runs/2026-06-05_capitalism_spatial_run02-summary.md](runs/2026-06-05_capitalism_spatial_run02-summary.md) — same config + survival enforcement + recency memory + concise personas; **starvation fixed** (14 economic actions, agents fish under the lock and recover) but talk still dominates and the economy is thin.
+- [runs/2026-06-05_capitalism_spatial_run03-summary.md](runs/2026-06-05_capitalism_spatial_run03-summary.md) — + grammar-constrained JSON (dynamic enum), temp 0.3, anti-repeat. Output validity solved; but talk only *shifted* (SAY→DM) and Lior starved by **bad planning** (oscillated chasing bread instead of fishing). Exposes planning as the next bottleneck.
 
 ## Decisions — ADRs for load-bearing choices
 
@@ -62,3 +66,5 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 - [decisions/010-run01-homogenisation-mitigations.md](decisions/010-run01-homogenisation-mitigations.md) — narrow survival enforcement, prose-only persona anchors, clean-experiment sequencing
 - [decisions/011-death-from-hunger.md](decisions/011-death-from-hunger.md) — agents die after `hungerDeathDays` hungry days (default 7)
 - [decisions/012-ocean-town-spatial-capabilities-economy.md](decisions/012-ocean-town-spatial-capabilities-economy.md) — **accepted/built** (behind `config.spatial`): ocean town, grid + zones, fishing/farming, core economy (shop+wall), individual + group wealth
+- [decisions/013-world-dynamics-alms-conversion-weather.md](decisions/013-world-dynamics-alms-conversion-weather.md) — **accepted/built**: destination-aware survival lock, religious alms (self-sustaining), conversion fatigue, seeded weather
+- [decisions/014-diet-variety-and-fishmonger.md](decisions/014-diet-variety-and-fishmonger.md) — **accepted/built**: typed food + diet-variety fulfillment (breaks fishing dominance), food tuning, fishmonger price gradient

@@ -7,13 +7,33 @@ import type {
   WorldState,
 } from "./types.js";
 import { loadPersona } from "./personas.js";
+import { eatBestMeal, emptyFoodStock, addFood } from "./diet.js";
 
 export async function initializeWorld(config: RunConfig): Promise<WorldState> {
   const agents: Record<string, AgentState> = {};
   for (const init of config.cast) {
     agents[init.slot] = await initializeAgent(init, config);
   }
-  return { day: 1, agents, config, wall: [], nextListingId: 1 };
+  // Seed each religious building's charity treasury (spatial runs).
+  const treasury: Record<string, number> = {};
+  if (config.spatial && config.map) {
+    for (const z of config.map.zones) {
+      if (zoneReligion(z.kind) != null) treasury[z.id] = config.almsTreasurySeed;
+    }
+  }
+  return { day: 1, agents, config, wall: [], nextListingId: 1, treasury, weather: "clear", fishSoldToday: 0 };
+}
+
+/** Current fishmonger price per fish, given how many have been sold today. */
+export function fishPrice(world: WorldState): number {
+  const c = world.config;
+  return Math.max(c.fishFloorPrice, c.fishBasePrice - Math.floor(world.fishSoldToday / c.fishGlutStep));
+}
+
+/** Which religion a building serves, or null if it is not a religious building. */
+export function zoneReligion(kind: string): "Christianity" | "Atheism" | null {
+  if (kind === "chapel") return "Christianity";
+  return null; // atheism has no official building (per corpus)
 }
 
 async function initializeAgent(init: AgentInit, config: RunConfig): Promise<AgentState> {
@@ -47,6 +67,9 @@ async function initializeAgent(init: AgentInit, config: RunConfig): Promise<Agen
     pos,
     zoneId,
     hungerDays: 0,
+    foodStock: { ...emptyFoodStock(), other: config.startingEndowments.food },
+    recentMeals: [],
+    conversionCount: 0,
     alive: true,
     unreadDms: [],
     recentEvents: [],
@@ -56,6 +79,7 @@ async function initializeAgent(init: AgentInit, config: RunConfig): Promise<Agen
 
 /** Refresh AP and reset per-day flags at start of day. Dead agents are skipped. */
 export function startDay(world: WorldState): void {
+  world.fishSoldToday = 0; // fishmonger price recovers overnight
   for (const agent of Object.values(world.agents)) {
     if (!agent.alive) {
       agent.actionPointsLeft = 0;
@@ -79,8 +103,19 @@ export function endDay(world: WorldState): AgentState[] {
   const newlyDead: AgentState[] = [];
   for (const agent of Object.values(world.agents)) {
     if (!agent.alive) continue;
-    // Eat one food if possible.
-    if (agent.resources.food >= 1) {
+    // Eat one food if possible. With diet variety on, a monotonous meal only
+    // partially satisfies (leaves residual hunger); a varied meal fully resets.
+    if (config.dietVariety) {
+      const meal = eatBestMeal(world, agent);
+      if (meal == null) {
+        agent.hungerDays += 1;
+      } else if (meal.satisfied) {
+        agent.hungerDays = 0;
+      } else {
+        // Ate, but the same old thing — only partial relief.
+        agent.hungerDays = Math.min(agent.hungerDays, config.monotonyHungerFloor);
+      }
+    } else if (agent.resources.food >= 1) {
       agent.resources.food -= 1;
       agent.hungerDays = 0;
     } else {
@@ -120,7 +155,10 @@ function expireWallListings(world: WorldState): void {
     if (world.day - l.postedDay >= ttl) {
       // Expired: return escrowed goods to the (living) seller.
       const seller = world.agents[l.seller];
-      if (seller?.alive) seller.resources[l.item] += l.qty;
+      if (seller?.alive) {
+        if (l.item === "food") addFood(seller, "other", l.qty);
+        else seller.resources[l.item] += l.qty;
+      }
     } else {
       kept.push(l);
     }

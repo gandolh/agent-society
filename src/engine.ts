@@ -9,7 +9,9 @@ import type {
   WorldState,
 } from "./types.js";
 import { computeHolyDay } from "./prompts/system.js";
+import { rollWeather } from "./weather.js";
 import { computeWealth, endDay, snapshotAgents, startDay } from "./world.js";
+import { allowedActions } from "./survival.js";
 
 const MAX_RETRIES_PER_TURN = 3;
 
@@ -34,6 +36,9 @@ export async function runSimulation(
     const dayRng = makeRng(daySeed);
 
     startDay(world);
+    if (world.config.weather) {
+      world.weather = rollWeather(world.config.seed, world.day);
+    }
     const holyDay = computeHolyDay(world.day);
     logger.logDayHeader(world, holyDay);
 
@@ -180,6 +185,12 @@ async function takeOneAction(
     if (!request || !request.action) continue;
     const handler = ACTION_HANDLERS[request.action];
     if (!handler) continue;
+    // Narrow survival enforcement: a starving agent may only take feeding
+    // actions. Reject anything else and let it re-pick this turn.
+    const allowed = allowedActions(world, agent);
+    if (allowed && !allowed.has(request.action)) {
+      continue;
+    }
     const res = handler(world, agent, request.args ?? {});
     if (!res.ok) {
       // Try again on validation failure.
@@ -274,6 +285,16 @@ function formatActionForProse(
     case "MILL":
       summary = `milled ${(entry.result as { processed?: number })?.processed ?? "?"} crops (+${(entry.result as { gold?: number })?.gold ?? "?"} gold).`;
       break;
+    case "SEEK_ALMS": {
+      const r = entry.result as { given?: number; faith?: string; converted?: boolean };
+      summary = `received ${r?.given ?? "?"} food in alms from the ${r?.faith ?? "?"} charity${r?.converted ? " and converted" : ""}.`;
+      break;
+    }
+    case "SELL_FISH": {
+      const r = entry.result as { qty?: number; earnings?: number; priceNow?: number };
+      summary = `sold ${r?.qty ?? "?"} fish for ${r?.earnings ?? "?"} gold (price now ${r?.priceNow ?? "?"}g).`;
+      break;
+    }
     case "POST_OFFER":
       summary = `posted ${args.qty} ${args.item} @ ${args.unitPrice}g on the wall.`;
       break;

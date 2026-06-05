@@ -61,6 +61,8 @@ What does this enable? What does this make harder? What are the open questions?
 | 010 | [run01-homogenisation-mitigations](010-run01-homogenisation-mitigations.md) | accepted |
 | 011 | [death-from-hunger](011-death-from-hunger.md) | accepted |
 | 012 | [ocean-town-spatial-capabilities-economy](012-ocean-town-spatial-capabilities-economy.md) | accepted |
+| 013 | [world-dynamics-alms-conversion-weather](013-world-dynamics-alms-conversion-weather.md) | accepted |
+| 014 | [diet-variety-and-fishmonger](014-diet-variety-and-fishmonger.md) | accepted |
 
 ## Superseding
 

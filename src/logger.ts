@@ -74,6 +74,7 @@ export class RunLogger {
     }
     const prices = world.config.marketPrices;
     morningParts.push(`Market: seeds ${prices.buySeeds}g, food ${prices.buyFood}g`);
+    if (world.config.weather) morningParts.push(`Weather: ${world.weather}`);
     lines.push(`**Morning state.** ${morningParts.join(". ")}.`);
     lines.push("");
     this.transcriptBuf.push(lines.join("\n"));

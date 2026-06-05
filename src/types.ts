@@ -29,11 +29,23 @@ export type {
   ZoneKind,
   Zone,
   WorldMap,
+  Weather,
 } from "./schemas.js";
 
-import type { ActionName, AgentRole, Religion, Resources, RunConfig } from "./schemas.js";
+import type { ActionName, AgentRole, Religion, Resources, RunConfig, Weather } from "./schemas.js";
 
 export type Pos = { x: number; y: number };
+
+/**
+ * Food provenance, for the diet-variety mechanic. `resources.food` stays a
+ * single fungible count (so market/give/tithe/alms code is untouched); this
+ * tracks WHAT that food is, so monotony can be penalised. "other" = bought,
+ * gifted, or alms food — always counts as dietary variety.
+ */
+export type FoodType = "fish" | "crop" | "forage" | "other";
+
+/** Per-type food on hand (sums to ~resources.food). */
+export type FoodStock = Record<FoodType, number>;
 
 export type PlantedCrop = {
   plantedDay: number;
@@ -67,6 +79,12 @@ export type AgentState = {
   /** Id of the zone the agent currently stands in, if any. Spatial runs only. */
   zoneId?: string;
   hungerDays: number;
+  /** What food the agent holds, by provenance (for diet variety). Sums to ~resources.food. */
+  foodStock: FoodStock;
+  /** The food types eaten on the most recent days (newest last) — drives monotony penalty. */
+  recentMeals: FoodType[];
+  /** Lifetime CONVERT count — drives conversion fatigue (religions refuse serial converters). */
+  conversionCount: number;
   /** False once the agent has died of hunger. Dead agents take no turns. */
   alive: boolean;
   /** The day the agent died, if dead. */
@@ -102,6 +120,12 @@ export type WorldState = {
   wall: WallListing[];
   /** Monotonic counter for listing ids (deterministic). */
   nextListingId: number;
+  /** Per-religious-building food treasury (zone id → food). Funds alms; grown by food TITHEs there. */
+  treasury: Record<string, number>;
+  /** The current day's weather (rolled at day start; "clear" when weather is off). */
+  weather: Weather;
+  /** Fish sold to the fishmonger so far today (drives the falling price). Reset each day. */
+  fishSoldToday: number;
 };
 
 export type AgentSnapshot = {

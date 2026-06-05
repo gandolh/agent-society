@@ -10,6 +10,14 @@ Three resources, one market, one survival pressure. Designed to be just complex 
 
 > **Spatial (ocean-town) additions.** When `config.spatial` is on (see [../decisions/012-ocean-town-spatial-capabilities-economy](../decisions/012-ocean-town-spatial-capabilities-economy.md)), food has two new sources — **`FISH`** at the harbour (+`fishYield`) and **`FORAGE`** at a forage zone (+`forageYield`) — and gold has a new source, **`MILL`** (ready crops → `millGoldPerCrop` gold each). Trade gains a **market wall**: agents `POST_OFFER` goods (held in escrow), `READ_OFFERS`, and `BUY_FROM_WALL`; unsold listings refund after `wallListingTtlDays`. All of these are zone-gated. Resources, prices, and shopkeeper below are unchanged.
 
+> **Religious charity & weather** (see [../decisions/013-world-dynamics-alms-conversion-weather](../decisions/013-world-dynamics-alms-conversion-weather.md)).
+> - **Alms (`SEEK_ALMS`)**: each religious building (the chapel) holds a food treasury seeded with `almsTreasurySeed` and grown by food TITHEs made there. A *hungry* adherent — or a would-be convert (`convertIntent`) — draws `almsFoodAmount` free food. A self-sustaining faith-based safety net (tithes in → alms out; no engine food-spawning).
+> - **Weather** (`config.weather`): a daily seeded roll (clear/rain/storm/drought) modifies food yields — **storm blocks `FISH`**, **rain boosts `FORAGE`/`HARVEST` ×1.5**, **drought halves crops**. Makes *when* and *where* an agent gathers food matter.
+
+> **Diet variety & the fishmonger** (see [../decisions/014-diet-variety-and-fishmonger](../decisions/014-diet-variety-and-fishmonger.md)).
+> - **Diet variety** (`config.dietVariety`): food carries provenance (fish/crop/forage/other). Eating the **same type** as recent days only partially fills you (residual hunger `monotonyHungerFloor`); a **varied** diet resets hunger to 0. So no single food self-sustains — a pure fisher must diversify or trade. This is the structural fix for fishing dominance (runs 02/03: everyone fished, nobody farmed/traded).
+> - **Fishmonger** (`SELL_FISH`, harbour): buys fish for gold at a price that **falls as more are sold that day** (`fishBasePrice` → `fishFloorPrice`, step `fishGlutStep`), reset daily. A glut crashes the price — fishing-for-gold is self-limiting, and fish becomes a trade good with a real market rather than an infinite gold tap.
+
 ## Resources
 
 | Resource | Use | Source |
