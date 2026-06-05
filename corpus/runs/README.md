@@ -1,12 +1,16 @@
 # Runs
 
-**Status:** scaffolding
-**Last updated:** 2026-05-26
+**Status:** stable
+**Last updated:** 2026-06-05
 **Related:** [../design/log-format](../design/log-format.md), [../design/observer-workflow](../design/observer-workflow.md), [../experiments/run-plan](../experiments/run-plan.md)
 
-This directory holds **raw simulation outputs**. Each run is a self-contained subdirectory. These files are written by the framework and **are not modified by hand** — they are the immutable record of what happened.
+> **Two places, two layers.** The **raw** simulation outputs live in the repo-root `runs/<dir>/` directory and are written by the framework — immutable, not edited by hand. This corpus directory holds the **summaries** (the *meaning* extracted from each run), named `<runDir>-summary.md`. Per-run `config.json` files are gitignored; only `transcript.md` for run 01 is committed.
 
-## Run directory naming
+## Summaries in this directory
+
+- [2026-05-26_socialism_run01-summary](2026-05-26_socialism_run01-summary.md) — first v1 run; **failed** via homogeneous "poetic sycophancy" / register collapse (469 `SAY` vs ~0 economic actions, everyone starving). The diagnostic that motivated the v2 pivot.
+
+## Run directory naming (raw, repo root)
 
 ```
 runs/<YYYY-MM-DD>_<regime>_run<NN>/
@@ -14,25 +18,24 @@ runs/<YYYY-MM-DD>_<regime>_run<NN>/
 
 Examples:
 - `runs/2026-05-26_socialism_run01/`
-- `runs/2026-06-01_monarchy_run03/`
+- `runs/2026-06-10_capitalism_run02/`
 
-## Per-run layout
+## Per-run raw layout
 
 See [../design/log-format](../design/log-format.md) for the full schema. In brief:
 
 ```
-runs/2026-05-26_socialism_run01/
-├── README.md            # short — run metadata, anything noted before/after the run
-├── config.json          # exact config used (reproducibility)
+runs/2026-06-10_capitalism_run02/
+├── config.json          # exact config used (reproducibility) — gitignored
 ├── transcript.md        # master chronological prose narrative — paste this to Claude
 ├── events.jsonl         # structured event log, one JSON per line
 ├── agents/              # per-agent files, regenerated at end of run from events.jsonl
-│   ├── V1-eda.md
+│   ├── V1-tessa.md
 │   ├── V2-bram.md
 │   ├── V3-lior.md
 │   ├── N1-aldric.md
 │   ├── N2-father-maro.md
-│   └── N3-sister-velka.md
+│   └── N3-nyssa.md
 └── summary_final.md     # filled in by hand after Claude-assisted analysis
 ```
 
@@ -48,11 +51,12 @@ Everything else is engine output. Do not edit.
 ## What gets edited at the corpus level after a run
 
 When a run completes, the [../CLAUDE.md](../CLAUDE.md) workflow says:
-1. Append a `## [date] run | ...` entry to [../log.md](../log.md).
-2. Add a row to the table in [../experiments/run-plan.md](../experiments/run-plan.md).
-3. If findings generalize, write a new page under [../experiments/](../experiments/) and cross-link.
+1. Write `corpus/runs/<runDir>-summary.md` capturing setup, key events, drift per agent, surprises.
+2. Append a `## [date] run | ...` entry to [../log.md](../log.md).
+3. Add a row to the table in [../experiments/run-plan.md](../experiments/run-plan.md).
+4. If findings generalize, write a new page under [../experiments/](../experiments/) and cross-link.
 
-The runs themselves are *immutable*; the *meaning* extracted from them lives in the wiki layer.
+The raw runs are *immutable*; the *meaning* extracted from them lives in this wiki layer.
 
 ## Reproducibility note
 
@@ -62,9 +66,4 @@ If reproducibility matters for a specific finding, rerun with the same config an
 
 ## Disk budget
 
-Each 100-day run produces:
-- `transcript.md`: ~1–3 MB
-- `events.jsonl`: ~0.5–1 MB
-- `agents/*.md` (six files): ~0.5 MB total
-
-Total per run: <5 MB. Plenty of headroom for many runs.
+A 31-day run produces well under 5 MB total (`transcript.md` ~0.5–1 MB, `events.jsonl` ~0.3–0.5 MB, six `agents/*.md`). Plenty of headroom for many runs.

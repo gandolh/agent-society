@@ -23,6 +23,37 @@ export const MarketPricesSchema = z.object({
   sellAny: z.number().int().positive(),
 });
 
+// ---------------------------------------------------------------------------
+// Spatial layer (ocean town). Optional — only present when config.spatial.
+// Zones are referenced by short id in prompts to keep tokens minimal; x/y is
+// engine-only (for distance) and never shown to the agent.
+
+export const ZoneKindSchema = z.enum([
+  "harbour", // fishing pier, ocean-adjacent
+  "farm",
+  "market", // shopkeeper + wall
+  "mill",
+  "chapel",
+  "home",
+  "forage",
+  "ocean",
+]);
+
+export const ZoneSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  kind: ZoneKindSchema,
+  x: z.number().int().nonnegative(),
+  y: z.number().int().nonnegative(),
+  owner: z.string().optional(), // slot id, narrative ownership
+});
+
+export const WorldMapSchema = z.object({
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  zones: z.array(ZoneSchema).min(1),
+});
+
 export const AgentInitSchema = z.object({
   slot: z.string().min(1),
   name: z.string().min(1),
@@ -45,6 +76,28 @@ export const RunConfigSchema = z.object({
   cropMaturityDays: z.number().int().positive(),
   foodPerCrop: z.number().int().positive(),
   hungerApPenalty: z.array(z.number().int().nonnegative()).min(1),
+  /**
+   * Number of consecutive hungry days (no food eaten at night) after which an
+   * agent dies. `hungerDays` reaching this value at end-of-day kills the agent.
+   * Omit/null to disable death (soft-pressure-only, the v1 behaviour).
+   */
+  hungerDeathDays: z.number().int().positive().nullable().optional(),
+  /** Enable the spatial ocean-town layer. When false, the world is aspatial (v1/v2 default). */
+  spatial: z.boolean().default(false),
+  /** The town map. Required when spatial is true (validated at boot). */
+  map: WorldMapSchema.optional(),
+  /** Tiles within this Chebyshev distance hear a SAY. 0 = same tile only. */
+  sayRadius: z.number().int().nonnegative().default(1),
+  /** Max tiles an agent moves per TRAVEL action. */
+  moveSpeed: z.number().int().positive().default(4),
+  /** Food gained from one FISH action (at the harbour). */
+  fishYield: z.number().int().positive().default(2),
+  /** Food gained from one FORAGE action (in a forage zone). */
+  forageYield: z.number().int().positive().default(2),
+  /** Gold gained per ready crop when MILL-processing (vs. selling raw). */
+  millGoldPerCrop: z.number().int().positive().default(2),
+  /** Days a market-wall listing stays live before it expires. */
+  wallListingTtlDays: z.number().int().positive().default(3),
   corpusPath: z.string().min(1),
   runDir: z.string().min(1),
   ollamaBaseUrl: z.string().url(),
@@ -65,6 +118,14 @@ export const ActionNameSchema = z.enum([
   "TITHE",
   "CONVERT",
   "REST",
+  // Spatial layer (only offered when config.spatial):
+  "TRAVEL",
+  "FISH",
+  "FORAGE",
+  "MILL",
+  "POST_OFFER",
+  "READ_OFFERS",
+  "BUY_FROM_WALL",
 ]);
 
 /**
@@ -90,3 +151,6 @@ export type AgentInit = z.infer<typeof AgentInitSchema>;
 export type RunConfig = z.infer<typeof RunConfigSchema>;
 export type ActionName = z.infer<typeof ActionNameSchema>;
 export type ActionRequest = z.infer<typeof ActionRequestSchema>;
+export type ZoneKind = z.infer<typeof ZoneKindSchema>;
+export type Zone = z.infer<typeof ZoneSchema>;
+export type WorldMap = z.infer<typeof WorldMapSchema>;

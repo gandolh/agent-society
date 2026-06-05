@@ -26,8 +26,19 @@ async function main(): Promise<void> {
     config = defaultRun01Config();
   }
 
+  if (args.includes("--spatial")) {
+    config = { ...config, spatial: true };
+  }
+
   if (isSmoke) {
     config = { ...config, days: 1, runName: `${config.runName}_smoke` };
+  }
+
+  // Spatial runs need a map; fall back to the built-in ocean-town map if the
+  // config enabled spatial but didn't supply one.
+  if (config.spatial && !config.map) {
+    config = { ...config, map: defaultOceanTownMap() };
+    console.log("[runDriver]   spatial=on, using default ocean-town map");
   }
 
   config.runDir = resolve(config.runDir);
@@ -82,9 +93,49 @@ function defaultRun01Config(): RunConfig {
     cropMaturityDays: 3,
     foodPerCrop: 3,
     hungerApPenalty: [7, 7, 6, 5, 3],
+    hungerDeathDays: 7,
+    spatial: false,
+    sayRadius: 1,
+    moveSpeed: 4,
+    fishYield: 2,
+    forageYield: 2,
+    millGoldPerCrop: 2,
+    wallListingTtlDays: 3,
     corpusPath: "./corpus",
     runDir: "./runs/2026-05-28_capitalism_run02",
     ollamaBaseUrl: "https://ollama.com",
+  };
+}
+
+/**
+ * Default ocean-town map. Compact 16×10 grid so travel is a real but small cost
+ * over a 31-day run. The south edge (y=9) is ocean; the harbour sits on the
+ * coast. Homes are owned per-slot so agents start spread out.
+ */
+function defaultOceanTownMap(): RunConfig["map"] {
+  return {
+    width: 16,
+    height: 10,
+    zones: [
+      // Coast (south).
+      { id: "harbour", name: "Harbour Pier", kind: "harbour", x: 4, y: 8 },
+      { id: "ocean", name: "The Ocean", kind: "ocean", x: 4, y: 9 },
+      // Hub + workplaces (mid).
+      { id: "market", name: "Market Square", kind: "market", x: 8, y: 5 },
+      { id: "mill", name: "Vance Mill", kind: "mill", x: 12, y: 5, owner: "N1" },
+      { id: "chapel", name: "Parish Chapel", kind: "chapel", x: 8, y: 2, owner: "N2" },
+      // Land use.
+      { id: "fieldN", name: "North Field", kind: "farm", x: 5, y: 2 },
+      { id: "fieldS", name: "South Field", kind: "farm", x: 5, y: 6 },
+      { id: "grove", name: "Tidal Grove", kind: "forage", x: 1, y: 7 },
+      // Homes (one per slot).
+      { id: "home-V1", name: "Tessa's Bakery", kind: "home", x: 11, y: 2, owner: "V1" },
+      { id: "home-V2", name: "Bram's Surgery", kind: "home", x: 10, y: 7, owner: "V2" },
+      { id: "home-V3", name: "Lior's Workshop", kind: "home", x: 13, y: 7, owner: "V3" },
+      { id: "home-N1", name: "Aldric's House", kind: "home", x: 14, y: 4, owner: "N1" },
+      { id: "home-N2", name: "Maro's Rectory", kind: "home", x: 7, y: 1, owner: "N2" },
+      { id: "home-N3", name: "Nyssa's Print-shop", kind: "home", x: 2, y: 4, owner: "N3" },
+    ],
   };
 }
 

@@ -12,6 +12,9 @@ export {
   RunConfigSchema,
   ActionNameSchema,
   ActionRequestSchema,
+  ZoneKindSchema,
+  ZoneSchema,
+  WorldMapSchema,
 } from "./schemas.js";
 export type {
   Religion,
@@ -23,9 +26,14 @@ export type {
   RunConfig,
   ActionName,
   ActionRequest,
+  ZoneKind,
+  Zone,
+  WorldMap,
 } from "./schemas.js";
 
 import type { ActionName, AgentRole, Religion, Resources, RunConfig } from "./schemas.js";
+
+export type Pos = { x: number; y: number };
 
 export type PlantedCrop = {
   plantedDay: number;
@@ -54,7 +62,15 @@ export type AgentState = {
   resources: Resources;
   actionPointsLeft: number;
   plot: Plot;
+  /** Grid position. Present only in spatial runs (otherwise {0,0}, unused). */
+  pos: Pos;
+  /** Id of the zone the agent currently stands in, if any. Spatial runs only. */
+  zoneId?: string;
   hungerDays: number;
+  /** False once the agent has died of hunger. Dead agents take no turns. */
+  alive: boolean;
+  /** The day the agent died, if dead. */
+  diedOnDay?: number;
   unreadDms: UnreadDm[];
   recentEvents: EventLogEntry[];
   restedToday: boolean;
@@ -68,10 +84,24 @@ export type ActionResult = {
   publicEvent?: boolean;
 };
 
+/** A standing offer on the market wall (spatial economy, Stage 4). */
+export type WallListing = {
+  id: string;
+  seller: string; // slot id
+  item: "food" | "seeds";
+  qty: number;
+  unitPrice: number; // gold per unit
+  postedDay: number;
+};
+
 export type WorldState = {
   day: number;
   agents: Record<string, AgentState>;
   config: RunConfig;
+  /** Market-wall listings (spatial runs). Engine-tracked; expire after N days. */
+  wall: WallListing[];
+  /** Monotonic counter for listing ids (deterministic). */
+  nextListingId: number;
 };
 
 export type AgentSnapshot = {

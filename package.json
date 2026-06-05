@@ -1,7 +1,7 @@
 {
   "name": "agent-society",
   "version": "0.1.0",
-  "description": "TypeScript + Ollama framework for running small village simulations with LLM agents under different regime and religion conditions.",
+  "description": "TypeScript + Ollama framework for running small town simulations with LLM agents under capitalism, observing emergent social behavior and belief drift.",
   "private": true,
   "type": "module",
   "scripts": {

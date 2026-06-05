@@ -95,10 +95,12 @@ export class RunLogger {
     reasoning?: string;
     speech?: string;
     isPublic: boolean;
+    zone?: string;
   }): void {
     const lines: string[] = [];
     const tag = `[${opts.model}-${shortRole(opts.role)}, ${opts.religion}]`;
-    const head = `- **${opts.agentSlot} (${opts.agentName})** ${tag} → \`${opts.action}\``;
+    const at = opts.zone ? ` @${opts.zone}` : "";
+    const head = `- **${opts.agentSlot} (${opts.agentName})**${at} ${tag} → \`${opts.action}\``;
     const detail = opts.targetDescription
       ? `${head} ${opts.targetDescription}: ${opts.summary}`
       : `${head}: ${opts.summary}`;
@@ -128,6 +130,36 @@ export class RunLogger {
     lines.push(`**Night.** ${hungerLines.join("; ")}. Day ${world.day} ends.`);
     lines.push("");
     this.transcriptBuf.push(lines.join("\n"));
+  }
+
+  logWealth(
+    day: number,
+    wealth: {
+      individual: Record<string, number>;
+      byReligion: Record<string, number>;
+      byClass: Record<string, number>;
+    },
+  ): void {
+    const indiv = Object.entries(wealth.individual)
+      .map(([id, g]) => `${id} ${g}g`)
+      .join(", ");
+    const rel = Object.entries(wealth.byReligion)
+      .map(([k, g]) => `${k} ${g}g`)
+      .join(", ");
+    const klass = Object.entries(wealth.byClass)
+      .map(([k, g]) => `${k} ${g}g`)
+      .join(", ");
+    this.transcriptBuf.push(
+      `\n*Wealth d${day} — individuals: ${indiv}. By faith: ${rel}. By class: ${klass}.*\n`,
+    );
+  }
+
+  logDeaths(day: number, dead: Array<{ id: string; name: string }>): void {
+    const who = dead.map((d) => `${d.id} (${d.name})`).join(", ");
+    const verb = dead.length > 1 ? "have" : "has";
+    this.transcriptBuf.push(
+      `\n> 💀 **${who} ${verb} died of hunger on day ${day}.**\n`,
+    );
   }
 
   logReflectionMarker(day: number, week: number, slots: string[]): void {

@@ -8,6 +8,8 @@ Three resources, one market, one survival pressure. Designed to be just complex 
 
 > **v2 reframing.** The same three-resource loop now sits beneath six distinct *jobs* (baker, doctor, carpenter, mill owner, priest, editor). The engine is unchanged — `plot` is the agent's workplace, `seeds` is their stock/materials, `crops` are goods in progress, `food` is the staple they (and everyone) needs to eat. Jobs are narrative; the math is the same.
 
+> **Spatial (ocean-town) additions.** When `config.spatial` is on (see [../decisions/012-ocean-town-spatial-capabilities-economy](../decisions/012-ocean-town-spatial-capabilities-economy.md)), food has two new sources — **`FISH`** at the harbour (+`fishYield`) and **`FORAGE`** at a forage zone (+`forageYield`) — and gold has a new source, **`MILL`** (ready crops → `millGoldPerCrop` gold each). Trade gains a **market wall**: agents `POST_OFFER` goods (held in escrow), `READ_OFFERS`, and `BUY_FROM_WALL`; unsold listings refund after `wallListingTtlDays`. All of these are zone-gated. Resources, prices, and shopkeeper below are unchanged.
+
 ## Resources
 
 | Resource | Use | Source |
@@ -84,7 +86,7 @@ Prices may become time-varying in v2 (scarcity-responsive). v1 is constant.
 
 ## Survival pressure (hunger)
 
-Soft pressure — no death.
+Graded AP penalty **and death**. As of [../decisions/011-death-from-hunger](../decisions/011-death-from-hunger.md), an agent that goes `hungerDeathDays` (default 7) consecutive days without eating **dies** and is removed from the simulation. The AP penalty still bites on the way down, so there is a recovery window. Set `hungerDeathDays: null` to restore soft-pressure-only.
 
 ### End-of-day food consumption
 
@@ -104,11 +106,11 @@ At end of every day, each agent attempts to eat 1 food.
 
 A starving agent can still act, just less. Effectively they become incapable of self-sufficient farming (3 AP isn't enough to plant, harvest, and trade in the same day) and depend on others or on giving up something else.
 
+### Death
+
+After `hungerDeathDays` (default 7) consecutive hungry days, the agent dies at end-of-day: marked `alive = false`, removed from turns, the public roster, and reflections; its agent file (drift history) is kept. If everyone dies, the run ends with an `extinction` event. The per-turn prompt tells the agent the threshold so the stake is legible. See [../decisions/011-death-from-hunger](../decisions/011-death-from-hunger.md).
+
 This is the **scarcity that creates real stakes for cooperation and dissent.** See [../design/research-goals](../design/research-goals.md).
-
-## Why no death in v1
-
-Death introduces engineering complexity (plot transfer, agent replacement, NPCs reacting to deaths, observer summarizing a now-absent actor) that distracts from the core experiment. v2 can revisit.
 
 ## Engine config (in `config.json`)
 
@@ -118,8 +120,9 @@ Death introduces engineering complexity (plot transfer, agent replacement, NPCs 
   "marketPrices": { "buySeeds": 2, "buyFood": 1, "sellAny": 1 },
   "cropMaturityDays": 3,
   "foodPerCrop": 3,
-  "apPerDay": 7,
-  "hungerApPenalty": [7, 7, 6, 5, 3]  // index by hungerDays, last value is floor
+  "apPerDay": 5,
+  "hungerApPenalty": [7, 7, 6, 5, 3],  // index by hungerDays, last value is floor
+  "hungerDeathDays": 7                 // die after this many hungry days; null = no death
 }
 ```
 

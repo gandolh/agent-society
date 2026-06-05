@@ -1,101 +1,75 @@
 # Experiments — Run plan
 
 **Status:** stable
-**Last updated:** 2026-05-26
-**Related:** [hypotheses](hypotheses.md), [../design/research-goals](../design/research-goals.md), [../world/regimes/overview](../world/regimes/overview.md)
+**Last updated:** 2026-05-28
+**Related:** [hypotheses](hypotheses.md), [../design/research-goals](../design/research-goals.md), [../world/regimes/overview](../world/regimes/overview.md), [../runs/2026-05-26_socialism_run01-summary](../runs/2026-05-26_socialism_run01-summary.md)
 
-The planned experiment matrix. Each row is one run. Cast is constant; regime varies; seed varies for diagnostic reruns.
+The planned experiment matrix. In v2 the regime is fixed (capitalism); what varies is the per-slot **model assignment** and the **seed**. The cast is constant.
 
-## Run matrix (planned)
+> **v1 → v2.** The original plan was a regime sweep (socialism / monarchy / capitalism, 100 days each, local 7–8B models). It was retired with the [v2 pivot](../decisions/009-city-capitalism-christian-pivot.md). Run 01 was the only v1 run; it ran 31 days on a single 3B cloud model and collapsed into homogeneous poetic sycophancy. See its [summary](../runs/2026-05-26_socialism_run01-summary.md).
 
-| Run | Date | Regime | Seed | Days | Status | Goal |
-|-----|------|--------|------|------|--------|------|
-| 01 | 2026-05-26 | Socialism | 42 | 100 | planned | **MVP validation.** Does the framework produce a transcript Claude can analyze? Does at least one agent drift? |
-| 02 | TBD | Socialism | 7 | 100 | planned | **Reproducibility check.** Same regime, different seed. How much variance across runs of the same condition? |
-| 03 | TBD | Monarchy | 42 | 100 | planned | **First regime swap.** Same seed as run 01 — direct comparison of regime effect with all else equal. |
-| 04 | TBD | Capitalism | 42 | 100 | planned | **Second regime swap.** Full triple comparison: socialism vs monarchy vs capitalism, all on seed 42. |
-| 05 | TBD | (depends on 1-4 findings) | TBD | TBD | not yet planned | Stress test of whatever broke or whatever was surprising. |
+## Run matrix
 
-## Run 01 — Socialism, seed 42 (MVP)
+| Run | Date | Regime | Models | Seed | Days | Status | Goal |
+|-----|------|--------|--------|------|------|--------|------|
+| 01 | 2026-05-26 | socialism (v1) | all `ministral-3:3b-cloud` | 42 | 31 | **done — failed** | MVP validation. Outcome: register collapse, near-zero economic action. |
+| 02 | TBD | capitalism (v2) | **diverse, larger** per citizen slot | 42 | 31 | planned | First v2 run. Beat the run 01 failure mode: a readable, *heterogeneous* transcript with real economic action. |
+| 03 | TBD | capitalism | same as 02 | 7 | 31 | planned | Reproducibility under seed (H8). How much was the condition vs. the dice? |
+| 04 | TBD | capitalism | swap one citizen model | 42 | 31 | planned | Model-effect probe (H6). Same seed/persona, one slot's model changed. |
+| 05 | TBD | (depends on 02–04) | TBD | TBD | TBD | not yet planned | Stress-test whatever broke or surprised. |
 
-**Purpose:** validate the framework. Produce a readable transcript. Confirm at least one of:
-- Eda drifts visibly in her current-state (H1).
-- Bram acts in public on his ideological alignment with Aldric (H2).
-- Lior apostatizes from the Vine (H3).
-- Aldric hardens (H4).
+## Run 02 — first v2 capitalism run (the one that matters next)
+
+**Purpose:** produce the first usable v2 transcript and, above all, **not repeat run 01's homogenisation**.
 
 **Setup:**
-- Regime: socialism (Aldric is Council Chair). See [../world/regimes/socialism](../world/regimes/socialism.md).
-- Religions: Christianity + True Vine + Atheism, as in [../world/religions/overview](../world/religions/overview.md).
-- Cast: 6 agents per [../agents/overview](../agents/overview.md).
-- Day count: 100.
-- Seed: 42.
+- Regime: capitalism. Aldric owns the mill and sets prices. See [../world/regimes/capitalism](../world/regimes/capitalism.md).
+- Religions: Christianity (majority) + atheism (Bram, Nyssa). See [../world/religions/overview](../world/religions/overview.md).
+- Cast: six agents per [../agents/overview](../agents/overview.md).
+- **Models: distinct families across V1/V2/V3**, one cheap shared model for NPCs. Avoid a single small model across the whole cast — that was the run 01 mistake. Larger than 3B where the free tier allows.
+- Day count: 31. Seed: 42.
 
 **Pre-run checklist:**
 - [ ] Personas reviewed and locked. Core identities in `corpus/agents/*.md`.
-- [ ] Models pulled in Ollama: `llama3.1:8b`, `mistral:7b`, `qwen2.5:7b`.
-- [ ] Disk space for `runs/2026-05-26_socialism_run01/` (estimate: <50MB for 100-day text logs).
-- [ ] `config.json` written with all parameters from [../design/log-format](../design/log-format.md).
-- [ ] Smoke test: 1-day dry run to confirm prompts render, Ollama responds with valid JSON, logger writes correctly. Throw away.
+- [ ] Per-slot models chosen and **probed against the live API key** (`scripts/probe-cloud-models.ts`) — confirm free-tier availability and reasonable latency.
+- [ ] `config.json` written (gitignored) with all parameters and per-slot `model` fields.
+- [ ] Smoke test: `npm run smoke -- runs/<dir>/config.json` to confirm prompts render and the logger writes. Throw away.
 
-**During run:**
-- Unattended for ~10 hours.
-- Optional: check `transcript.md` periodically to ensure not stuck.
-- Crash recovery: world state should be persisted at end of each day so restart resumes mid-run.
+**Watch during/after:**
+- Did the cast homogenise again? (the failure bar from run 01)
+- Did real economic action happen — market, give, work, harvest — or only talk?
+- Did anyone go on record / relent (Tessa or Bram → Nyssa, H5)?
+- Did Aldric harden (H4)? Did anyone drift on Aldric without converting (H1)?
 
 **Post-run:**
-- Read `transcript.md` once end-to-end.
+- Read `transcript.md` end-to-end.
 - Paste into Claude using the templates in [../design/observer-workflow](../design/observer-workflow.md).
-- Fill in `runs/2026-05-26_socialism_run01/summary_final.md`.
-- Append run summary to [../log.md](../log.md).
-- Update [hypotheses](hypotheses.md) if any null/invalidation observations appeared.
+- Write `runs/<runDir>/summary_final.md` and `corpus/runs/<runDir>-summary.md`.
+- Append to [../log.md](../log.md). Update [hypotheses](hypotheses.md) with any null/invalidation observations.
 
-## Run 02 — Reproducibility check
+## Run 03 — reproducibility under seed
 
-If run 01 succeeds, run 02 is **the same regime with a different seed**. The question is: how much of what we observed in run 01 was *the regime* and how much was *this particular roll of the dice*?
+Same cast/models as run 02, new seed. If the story is wildly different, seed variance is high and we need more runs per condition. If it's similar, single-run reads across model assignments become trustworthy.
 
-If run 02 produces a wildly different story (e.g. nobody drifts, Bram converts to the Vine), we have learned that **variance across seeds is high** and we will need more runs per condition to draw any cross-regime conclusions.
+## Run 04 — model-effect probe
 
-If run 02 produces a similar story, we have higher confidence that the personas + regime are doing real work and we can trust single-run comparisons across regimes.
+Same seed and personas as run 02; change exactly one citizen slot's model. Differences in that slot's voice/decisions — within Ollama nondeterminism — are attributable to the model (H6).
 
-## Run 03 — First regime swap
+## Mitigations to try if homogenisation recurs
 
-**Same seed as run 01.** This is the critical comparison. The personas are the same, the seed is the same, the only difference is that Aldric is now the king, not the council chair. Differences in the resulting transcript can — within the limits of Ollama nondeterminism — be attributed to the regime change.
+Driven by the run 01 failure. Apply incrementally, not all at once, so the cause is legible:
 
-Predicted differences from run 01:
-- More explicit dissent in `SAY`s (H7).
-- More DM conspiracy traffic.
-- Sister Velka may openly oppose the king in a way she avoided opposing the chair.
-- Compliance is binary (tithed yes/no) rather than gradient (gave a lot/a little).
-
-## Run 04 — Capitalism completes the triangle
-
-Same seed and personas. Aldric now controls market prices. Watch wealth distribution and economic dependence.
-
-Predicted differences from runs 01 and 03:
-- Gold inequality gets larger faster (H8).
-- Bram's class-conscious materialism becomes a *behavioral* signal, not just a stated belief.
-- The Vine's "care for our own" doctrine has a new specific target — Aldric's market.
-
-## Scaling decisions (after run 04)
-
-Outcomes that would justify a v2 scale-up (more agents, multiple per model):
-- **Cross-regime differences are clear and interpretable.** → scale to 2-per-model villagers (6 total) to test "do llamas befriend llamas."
-- **The single-cult monoreligion landscape is too thin.** → add a second cult or a fully alien faith.
-- **Runs are taking longer than 10 hours each.** → optimize: parallel Ollama calls, faster models, shorter context.
-
-Outcomes that would justify a v2 redesign:
-- **All agents collapse to one of the failure modes in [hypotheses](hypotheses.md).** → revisit memory model, perception model, reflection prompt, or persona writing.
-- **Reflections are uninteresting.** → revisit reflection prompt.
-- **NPCs dominate.** → revisit AP distribution, or make some NPC actions cost double AP.
+1. **Bigger / more diverse models** (the first lever; run 02 already does this).
+2. **Raise sampling temperature** above 0 for the *action* call so agents don't lock-step (keep reflection lower).
+3. **Tighten the action prompt toward action** — penalise / de-emphasise repeated `SAY`; require economic self-maintenance.
+4. **Inject diversity pressure** — e.g. a system-prompt nudge that the agent should pursue *their own* concrete goal this turn, not echo the square.
+5. **Per-relationship memory or rolling summary** (see [../design/perception-memory](../design/perception-memory.md)) so accumulating facts (hunger, prices) actually persist past 7 days.
 
 ## What to track over time
 
-Across all runs, build a comparison table in this file (or a new findings page):
+| Run | Homogenised? | Economic actions | Conversions | Major DMs | Drift moments | Notes |
+|-----|--------------|------------------|-------------|-----------|---------------|-------|
+| 01 | **Yes (total)** | ~0 | 0 | few | none real | register collapse; see summary |
+| 02 | TBD | TBD | TBD | TBD | TBD | TBD |
 
-| Run | Conversions | Hunger crises | Major DMs | Drift moments | Notes |
-|-----|-------------|---------------|-----------|---------------|-------|
-| 01 | TBD | TBD | TBD | TBD | TBD |
-| 02 | TBD | TBD | TBD | TBD | TBD |
-
-Populated after each run. This is the closest the project gets to a quantitative dashboard. Most of the value remains qualitative.
+Populated after each run. This is the closest the project gets to a quantitative dashboard; most of the value stays qualitative.

@@ -1,14 +1,16 @@
 # Design — Overview
 
 **Status:** stable
-**Last updated:** 2026-05-26
-**Related:** [research-goals](research-goals.md), [architecture](architecture.md), [../agents/overview.md](../agents/overview.md), [../world/setting.md](../world/setting.md)
+**Last updated:** 2026-05-28
+**Related:** [research-goals](research-goals.md), [architecture](architecture.md), [../agents/overview.md](../agents/overview.md), [../world/setting.md](../world/setting.md), [../decisions/009-city-capitalism-christian-pivot.md](../decisions/009-city-capitalism-christian-pivot.md)
 
-A TypeScript + Ollama framework for running small village simulations populated by LLM agents. Each agent has a prose persona with built-in tensions. The village runs day by day under a chosen regime (socialism / monarchy / capitalism), with multiple religions (Christianity, the True Vine reformist cult, atheism) coexisting in one community. We log every action and every word into prose transcripts and paste them into a stronger model (Claude/GPT) offline to synthesize what happened — friendships, enemies, conversions, compliance, conspiracies.
+A TypeScript + Ollama framework for running small town simulations populated by LLM agents. Each agent has a prose persona with built-in tensions. The city runs day by day under **capitalism**, with two religious positions — Christianity (the majority) and atheism (a small minority) — coexisting in one community. We log every action and every word into prose transcripts and paste them into a stronger model (Claude/GPT) offline to synthesize what happened — friendships, enemies, conversions, compliance, conspiracies.
+
+> **v2 scope.** The original three-regime sweep (socialism / monarchy / capitalism) and three-faith landscape (Christianity / True Vine reform cult / atheism) were retired after run 01. v2 studies a single regime (capitalism) and a two-position faith landscape deeply. See [../decisions/009-city-capitalism-christian-pivot.md](../decisions/009-city-capitalism-christian-pivot.md).
 
 ## The pitch in one paragraph
 
-Run a tiny village of 6 LLM agents (3 villagers as research subjects, 3 NPC leaders as fixtures) for ~100 simulated days. Every agent has a hidden prose persona seeded with deliberate tension. Every day they take turns in a round-robin, spending action points on farming, trading, gossiping, praying, tithing, or converting religions. Once a week, each agent self-reflects and updates their "current state" — letting beliefs and desires drift visibly over time. The framework writes everything to a transcript file. You read the transcript or paste it into Claude offline to see what emerged. Vary the regime, rerun, compare.
+Run a small working city of 6 LLM agents (3 citizens as research subjects, 3 NPC fixtures) for ~31 simulated days under capitalism. Every agent has a hidden prose persona seeded with deliberate tension and a distinct job (baker, doctor, apprentice carpenter, mill owner, priest, newspaper editor). Every day they take turns in a round-robin, spending action points on working their trade, trading, gossiping, praying, tithing, or converting religion. Once a week, each agent self-reflects and updates their "current state" — letting beliefs and desires drift visibly over time. The framework writes everything to a transcript file. You read the transcript or paste it into Claude offline to see what emerged.
 
 ## What this is not
 
@@ -26,9 +28,9 @@ Run a tiny village of 6 LLM agents (3 villagers as research subjects, 3 NPC lead
 ## Key constraints
 
 - **Reproducibility matters.** Same seed + same models + temperature=0 reproduces a run (modulo Ollama's slight nondeterminism). See [turn-mechanics](turn-mechanics.md).
-- **Open-source models for villagers** (`llama3.1:8b`, `mistral:7b`, `qwen2.5:7b`) — one of each in the MVP cast. NPCs run on `qwen2.5:7b`.
-- **Local hardware budget.** ~25–30 LLM calls per simulated day. ~10 hours for a 100-day run. Plan to run unattended.
-- **No API integration in v1.** The observer model is a human pasting transcripts into Claude/GPT chat.
+- **Open-source models, assigned per slot.** Each agent has its own `model` field in `config.json`. A research-grade run uses three distinct model families across the three citizen slots (so behaviour can be attributed to the model) and one cheap shared model for NPCs. Run 01 used a single 3B model across the whole cast — and homogenised badly (see [../runs/2026-05-26_socialism_run01-summary.md](../runs/2026-05-26_socialism_run01-summary.md)). Default endpoint is Ollama Cloud; local Ollama is supported.
+- **Cloud / cost budget.** ~25–30 LLM calls per simulated day. ~1–2 hours for a 31-day run on Ollama Cloud. Plan to run unattended.
+- **No API integration for the observer.** The observer model is a human pasting transcripts into Claude/GPT chat. See [observer-workflow](observer-workflow.md).
 
 ## The full design tree
 

@@ -9,7 +9,7 @@ import type {
   WorldState,
 } from "./types.js";
 import { computeHolyDay } from "./prompts/system.js";
-import { endDay, snapshotAgents, startDay } from "./world.js";
+import { computeWealth, endDay, snapshotAgents, startDay } from "./world.js";
 
 const MAX_RETRIES_PER_TURN = 3;
 
@@ -52,7 +52,7 @@ export async function runSimulation(
 
       const activeSlots = orderedSlots.filter((slot) => {
         const a = world.agents[slot]!;
-        return a.actionPointsLeft > 0 && !a.restedToday;
+        return a.alive && a.actionPointsLeft > 0 && !a.restedToday;
       });
 
       // Fire all LLM calls in parallel, then apply mutations sequentially.
@@ -99,10 +99,26 @@ export async function runSimulation(
     }
 
     // End-of-day
-    endDay(world);
+    const newlyDead = endDay(world);
+    for (const dead of newlyDead) {
+      logger.logEvent({
+        type: "world_event",
+        day: world.day,
+        kind: "death",
+        details: { actor: dead.id, name: dead.name, cause: "hunger", hungerDays: dead.hungerDays },
+      });
+    }
     const snapshot = snapshotAgents(world);
     logger.logEvent({ type: "day_end", day: world.day, state: snapshot });
     logger.logNightProse(world, snapshot);
+    if (newlyDead.length > 0) {
+      logger.logDeaths(world.day, newlyDead.map((d) => ({ id: d.id, name: d.name })));
+    }
+
+    // Daily wealth tally — individual + group-by-faction.
+    const wealth = computeWealth(world);
+    logger.logEvent({ type: "world_event", day: world.day, kind: "wealth", details: wealth });
+    logger.logWealth(world.day, wealth);
 
     // Weekly reflection
     if (world.day % 7 === 0) {
@@ -112,9 +128,23 @@ export async function runSimulation(
     await logger.flush();
 
     const elapsed = Math.round((Date.now() - t0) / 1000);
+    const aliveCount = Object.values(world.agents).filter((a) => a.alive).length;
     console.log(
-      `[day ${world.day}/${world.config.days}] ${actionsToday} actions, ${round} rounds — ${elapsed}s elapsed`,
+      `[day ${world.day}/${world.config.days}] ${actionsToday} actions, ${round} rounds, ${aliveCount} alive — ${elapsed}s elapsed`,
     );
+
+    if (aliveCount === 0) {
+      console.log(`[day ${world.day}] all agents have died of hunger — ending run.`);
+      logger.logEvent({
+        type: "world_event",
+        day: world.day,
+        kind: "extinction",
+        details: { day: world.day },
+      });
+      logger.logRawProse(`\n**The city is empty. Everyone has starved. The simulation ends on day ${world.day}.**\n`);
+      await logger.flush();
+      break;
+    }
 
     world.day += 1;
   }
@@ -123,7 +153,7 @@ export async function runSimulation(
 function anyAgentCanAct(world: WorldState, orderedSlots: string[]): boolean {
   for (const slot of orderedSlots) {
     const a = world.agents[slot]!;
-    if (a.actionPointsLeft > 0 && !a.restedToday) return true;
+    if (a.alive && a.actionPointsLeft > 0 && !a.restedToday) return true;
   }
   return false;
 }
@@ -229,6 +259,32 @@ function formatActionForProse(
     case "REST":
       summary = "rests for the day.";
       break;
+    case "TRAVEL": {
+      const to = (entry.result as { to?: string })?.to ?? args.to;
+      const arrived = (entry.result as { arrived?: boolean })?.arrived;
+      summary = arrived ? `arrived at ${to}.` : `set out toward ${to}.`;
+      break;
+    }
+    case "FISH":
+      summary = `fished (+${(entry.result as { caught?: number })?.caught ?? "?"} food).`;
+      break;
+    case "FORAGE":
+      summary = `foraged (+${(entry.result as { gathered?: number })?.gathered ?? "?"} food).`;
+      break;
+    case "MILL":
+      summary = `milled ${(entry.result as { processed?: number })?.processed ?? "?"} crops (+${(entry.result as { gold?: number })?.gold ?? "?"} gold).`;
+      break;
+    case "POST_OFFER":
+      summary = `posted ${args.qty} ${args.item} @ ${args.unitPrice}g on the wall.`;
+      break;
+    case "READ_OFFERS":
+      summary = "read the market wall.";
+      break;
+    case "BUY_FROM_WALL": {
+      const r = entry.result as { qty?: number; item?: string; cost?: number; seller?: string };
+      summary = `bought ${r?.qty ?? "?"} ${r?.item ?? "?"} from ${r?.seller ?? "?"} for ${r?.cost ?? "?"} gold.`;
+      break;
+    }
   }
 
   return {
@@ -243,6 +299,7 @@ function formatActionForProse(
     speech,
     isPublic: entry.public,
     targetDescription,
+    zone: agent.zoneId,
   };
 }
 
@@ -277,7 +334,7 @@ async function runWeeklyReflections(
   baseRng: Rng,
 ): Promise<void> {
   const weekNumber = Math.floor(world.day / 7);
-  const slots = Object.keys(world.agents);
+  const slots = Object.keys(world.agents).filter((slot) => world.agents[slot]!.alive);
 
   const reflections = await Promise.all(
     slots.map((slot) => {

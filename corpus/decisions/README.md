@@ -57,6 +57,10 @@ What does this enable? What does this make harder? What are the open questions?
 | 006 | [bifurcated-persona-with-reflection](006-bifurcated-persona-with-reflection.md) | accepted |
 | 007 | [mvp-cast-size](007-mvp-cast-size.md) | accepted |
 | 008 | [ollama-cloud-and-zod-boundary](008-ollama-cloud-and-zod-boundary.md) | accepted |
+| 009 | [city-capitalism-christian-pivot](009-city-capitalism-christian-pivot.md) | accepted |
+| 010 | [run01-homogenisation-mitigations](010-run01-homogenisation-mitigations.md) | accepted |
+| 011 | [death-from-hunger](011-death-from-hunger.md) | accepted |
+| 012 | [ocean-town-spatial-capabilities-economy](012-ocean-town-spatial-capabilities-economy.md) | accepted |
 
 ## Superseding
 

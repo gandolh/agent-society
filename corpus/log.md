@@ -107,3 +107,58 @@ Major scenario pivot after run 01. Captured in [decisions/009-city-capitalism-ch
 - **Token diet.** Rewrote the system-prompt blocks tighter: regime/religion descriptions compressed, action descriptions trimmed, roster line shortened (`g5 f3 s3` vs full breakdown), memory format collapsed to one-line-per-day. Aim: ~30% reduction per-turn.
 - Files deleted: `world/regimes/socialism.md`, `world/regimes/monarchy.md`, `world/religions/true-vine.md`, and the six old persona files (replaced).
 - `runs/2026-05-26_socialism_run01/` preserved as raw v1 data.
+
+## [2026-06-05] run | socialism run01 | failed — homogeneous "poetic sycophancy" / register collapse
+
+Wrote up the only executed run (the v1 socialism run) after reading its transcript. Result was a failure mode, not any planned hypothesis:
+
+- Run as executed: **all six agents on one model** (`ministral-3:3b-cloud`), seed 42, **31 days** (not the planned 100), v1 cast (Eda, Velka, True Vine).
+- Action tally: **469 `SAY`, 55 `REST`, 6 `WORK_PLOT`, 6 `PRAY`, and 0 of everything else** (no market, harvest, give, DM, tithe, convert). ~88% of actions were talk.
+- The cast converged within days on a single mystical-poetic register and amplified it; distinct personas were erased. Everyone ended at hunger 28 — soft scarcity was ignored entirely.
+- Suspected causes: single small model across the cast; cheap unconstrained public `SAY`; thin 7-day memory; temp-0 lock-step. Captured in [runs/2026-05-26_socialism_run01-summary.md](runs/2026-05-26_socialism_run01-summary.md).
+- "Homogenisation / register collapse" added as the first framework-invalidating failure mode in [experiments/hypotheses.md](experiments/hypotheses.md); beating it is now run 02's primary success criterion in [experiments/run-plan.md](experiments/run-plan.md).
+
+## [2026-06-05] lint | reconcile corpus + README with v2 codebase
+
+Periodic health-check after noticing the corpus had drifted from the v2 code. Fixes:
+
+- **README.md** rewritten from v1 (village/socialism/Eda/True Vine, 100-day, wrong `npm run run:run01` commands, stale 4-family model table) to v2 (city/capitalism/Christian-atheist, 31-day, actual `npm run sim`/`smoke` commands, per-slot model assignment). `package.json` description updated.
+- **design/overview.md, research-goals.md** — removed the three-regime sweep / True Vine / local-7-8B framing; now single-regime capitalism with per-slot model as the swept variable.
+- **design/perception-memory.md** — memory window corrected **14 → 7 days** (code is truth); system-prompt example block rewritten to match `buildSystemPrompt`; added a note that within-round decisions are parallel.
+- **design/turn-mechanics.md + architecture.md** — turn flow corrected from sequential to **parallel-within-round**; cost/day-count figures updated; removed the unimplemented "world state persisted per day / crash recovery" claim.
+- **design/drift-reflection.md** — reflection prompt aligned to `buildReflectionPrompt`; added a **NOT-YET-IMPLEMENTED** banner on event-triggered reflection (only weekly is wired).
+- **experiments/hypotheses.md + run-plan.md** — rewritten to the v2 cast/conditions; H1–H8 re-anchored on Tessa/Bram/Lior/Aldric/Maro/Nyssa.
+- **runs/README.md** — clarified raw-vs-summary layers; v1 layout (eda/velka, 100-day) updated.
+- index.md + this log updated.
+
+## [2026-06-05] ingest | related-work page — literature diagnosis of run 01 + improvement levers
+
+Read the LLM-social-simulation literature against run 01's failure. New page [experiments/related-work.md](experiments/related-work.md):
+
+- Run 01's collapse is **over-determined** by three documented mechanisms: small models lack survival priors ([2508.12920](https://arxiv.org/abs/2508.12920)), LLM positivity/harmony bias ([2510.21180](https://arxiv.org/abs/2510.21180)), and centralised-topology entrainment ([2601.05606](https://arxiv.org/abs/2601.05606), [2411.03252](https://arxiv.org/abs/2411.03252)).
+- Anchor papers: Generative Agents (importance-scored retrieval + importance-gated reflection), Concordia (Game-Master consequence layer), CAMEL (contrastive prompting), Echo Chambers (Pz/DG/NCI metrics + dual memory).
+- Eight prioritised improvement levers, flagged where they tension with [ADR 002](decisions/002-prose-persona-no-traits.md) (no numeric traits) and [ADR 003](decisions/003-narrative-only-regime-with-llm-leaders.md) (no engine enforcement). No code changed; these are proposals pending the user's direction.
+
+## [2026-06-05] ingest | ADR 010 — run01 mitigation decisions (narrow enforcement / prose anchors / clean experiment)
+
+User chose, in a grilling session: (1) **narrow survival enforcement** — engine may restrict the action SET under survival pressure but never dictates economic/social/faith outcomes (amends [ADR 003](decisions/003-narrative-only-regime-with-llm-leaders.md)); (2) **prose-only persona anchors** — contrastive + negative-trait + anti-sycophancy lines as prose, no numbers ([ADR 002](decisions/002-prose-persona-no-traits.md) intact); (3) **clean experiment first** — run 02 changes ONLY model assignment, then ship (1)/(2) for run 03 if it still homogenises. See [decisions/010-run01-homogenisation-mitigations.md](decisions/010-run01-homogenisation-mitigations.md).
+
+## [2026-06-05] ingest | ADR 011 + code — death from hunger
+
+Implemented death from hunger (user request). New config knob `hungerDeathDays` (default 7); an agent that goes that many consecutive days without eating dies, is removed from turns/roster/reflections, and the run ends early if all die. `AgentState` gains `alive`/`diedOnDay`; `endDay` returns newly-dead; engine logs `death`/`extinction` world events and a transcript marker; the per-turn prompt now states the death threshold. Verified deterministically (agent with no food dies on schedule; fed agent survives). Supersedes the v1 "no death" stance in [world/economy.md](world/economy.md) and [design/turn-mechanics.md](design/turn-mechanics.md). See [decisions/011-death-from-hunger.md](decisions/011-death-from-hunger.md).
+
+## [2026-06-05] ingest | ADR 012 (proposed) + build plan — ocean town, spatial layer, capabilities, economy, group wealth
+
+User brought their Farm Valley ADR-007 (BDI/ECS archipelago farm sim) and asked the society to absorb its capabilities, adapted: an ocean-side town that fishes + farms, survives + accumulates wealth (individual AND by social group), with gold as the medium for trade/friendship/services. Grilled to settle four reconciliations: **LLM brain kept** (import Farm Valley's *capabilities*, not its BDI heuristics — [ADR 002](decisions/002-prose-persona-no-traits.md) intact); **core economy enforced, peer trades narrative** (engine: inventory + shopkeeper + market wall; LLM: gifts/friendship/services via GIVE/SAY/DM; auctions/CNP/trust-matrix parked — narrowly amends [ADR 003](decisions/003-narrative-only-regime-with-llm-leaders.md)); **group wealth by faction** (religion + class aggregation over existing state); **plan before code**. Wrote [decisions/012-ocean-town-spatial-capabilities-economy.md](decisions/012-ocean-town-spatial-capabilities-economy.md) (proposed) and a 6-stage [design/ocean-town-build-plan.md](design/ocean-town-build-plan.md), all gated behind `config.spatial` (default off). No simulation code written yet — awaiting approval of the open knobs.
+
+## [2026-06-05] ingest | ADR 012 BUILT — ocean-town spatial layer (Stages 1–5), token-minimised
+
+Implemented the ocean town in 5 verified stages (deterministic test + live spatial smoke each). Hard constraint: **budget-locked on `ministral-3:3b-cloud`**, so the layer had to *cut* per-turn tokens, not add them.
+
+- **Stage 1** — grid map (16×10, ocean on the south coast), `pos`/`zoneId` state, `TRAVEL` (greedy Chebyshev, `moveSpeed`), `src/spatial.ts` helpers, default map auto-filled. Agents see only zone **names** + a 3-line `WHERE` block (no coordinates/map).
+- **Stage 2** — `SAY` scoped to `sayRadius` (distant speech never enters the prompt → anti-homogenisation **and** fewer tokens); roster detail shown only for nearby agents.
+- **Stage 3** — `FISH`/`FORAGE`/`MILL` verbs; zone affordances (`requireZone`) gate work/market/fish/forage/mill; gated verbs hidden from the prompt unless the agent is at the right zone.
+- **Stage 4** — market wall: `POST_OFFER`/`READ_OFFERS`/`BUY_FROM_WALL` with escrow + TTL refund; offers shown only at the market.
+- **Stage 5** — daily wealth tally (per individual + by religion + by class) as a transcript line + `world_event{kind:"wealth"}`.
+
+All behind `config.spatial` (default off) so the clean run-02 model comparison stays aspatial per [ADR 010](decisions/010-run01-homogenisation-mitigations.md). New config knobs: `spatial`, `map`, `sayRadius`, `moveSpeed`, `fishYield`, `forageYield`, `millGoldPerCrop`, `wallListingTtlDays`. ADR 012 → accepted; updated [world/setting](world/setting.md), [world/economy](world/economy.md), [design/action-set](design/action-set.md), [design/perception-memory](design/perception-memory.md), [design/ocean-town-build-plan](design/ocean-town-build-plan.md). Run with `npm run sim -- --spatial`.

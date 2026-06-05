@@ -6,18 +6,22 @@
 
 A small working city. Maybe three thousand people. Six of them — the cast — are at the centre of the simulation.
 
-## Geography (abstract)
+## Geography — two modes
 
-No spatial coordinates in v1. The city is a single locale containing:
+The engine supports two world modes, chosen by `config.spatial`:
 
-- **Six "workplaces"**, one per agent — their bakery, surgery, carpentry bench, mill office, chapel, print-shop. The engine treats each as a generic `plot` for productive output; jobs are narrative.
-- **A city square** — where `SAY` actions happen. Everyone hears.
-- **A marketplace** — scripted NPC vendor for staples (food, materials). Always open. See [economy](economy.md).
-- **The mill & workshop** — Aldric Vance's operation. The city's largest single employer. Implicit, not a separate locale.
-- **The chapel** — Father Maro's parish, the city's only church. Implicit.
-- **The print-shop** — Nyssa Velkin's *City Ledger*. Implicit.
+### Aspatial (default)
+No coordinates. The city is a single locale; everyone is in earshot of everyone when they `SAY`. Locations (bakery, mill, chapel, square, marketplace) are *narrative*, not mechanical — the engine cares about the action and its visibility, not where it happens. This is the v1/v2 default.
 
-Locations are *narrative*, not mechanical. The engine cares about the action (`SAY`, `TITHE`, `PRAY`) and its visibility rules, not where it happens. See [../design/perception-memory](../design/perception-memory.md).
+### Spatial — the ocean town (opt-in)
+`config.spatial: true` turns on a **grid of named zones** beside the ocean. See [../decisions/012-ocean-town-spatial-capabilities-economy](../decisions/012-ocean-town-spatial-capabilities-economy.md) and the [ocean-town build plan](../design/ocean-town-build-plan.md). In this mode:
+
+- The town is a 16×10 grid; the **harbour** sits on the south **coast**, with a market square, mill, chapel, two farm fields, a tidal forage grove, and one home per agent.
+- Agents **`TRAVEL`** between zones; each zone *affords* a subset of actions (you must be at a farm to `WORK_PLOT`/`HARVEST`, at the harbour to `FISH`, at a forage zone to `FORAGE`, at the mill to `MILL`, at the market to trade).
+- **`SAY` is local** — heard only within `sayRadius` tiles, not city-wide. This is both realism and the run-01 homogenisation fix.
+- To stay cheap on small models, agents see only zone **names** (never coordinates or a map), and a 3-line `WHERE` block.
+
+The six workplaces stay narrative in flavour (Tessa's bakery, Bram's surgery, …) but now also have grid homes.
 
 ## Time
 
@@ -40,7 +44,7 @@ The city is small enough that everyone knows the cast, large enough that a capit
 
 - **Capitalism needs a labor market.** A village of farmers can be redistributive; a city of trades makes wages, prices, and credit the natural medium of conflict.
 - **Diverse jobs become legible.** Baker, doctor, carpenter, mill owner, priest, editor — six distinct economic roles in earshot of each other.
-- **No spatial layer needed.** Everyone is in earshot of everyone else when they `SAY`. No movement, no pathfinding.
+- **Spatial layer is optional.** The aspatial default keeps everyone in earshot; the opt-in ocean-town mode adds a grid, movement, and local `SAY` (see above and [ADR 012](../decisions/012-ocean-town-spatial-capabilities-economy.md)).
 - **Bounded social graph.** 6 nodes → 15 possible pairs. Tractable for offline observer analysis.
 
 ## What the city is *not*

@@ -14,6 +14,7 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 - [design/drift-reflection.md](design/drift-reflection.md) — weekly + event-triggered self-reflection
 - [design/log-format.md](design/log-format.md) — file layout, transcript.md, events.jsonl, agents/*.md
 - [design/observer-workflow.md](design/observer-workflow.md) — manual paste-to-Claude flow
+- [design/ocean-town-build-plan.md](design/ocean-town-build-plan.md) — staged plan for the ocean-town spatial + economy layer (proposed)
 
 ## World — what is being simulated
 
@@ -37,13 +38,14 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 
 ## Experiments — research design
 
-- [experiments/hypotheses.md](experiments/hypotheses.md) — what we're trying to learn
-- [experiments/run-plan.md](experiments/run-plan.md) — planned matrix of runs
+- [experiments/hypotheses.md](experiments/hypotheses.md) — what we're trying to learn (v2 cast)
+- [experiments/run-plan.md](experiments/run-plan.md) — planned matrix of runs (capitalism, model/seed sweep)
+- [experiments/related-work.md](experiments/related-work.md) — relevant papers + prioritised improvement levers (why run 01 collapsed)
 
-## Runs — raw simulation outputs
+## Runs — summaries (raw outputs live in repo-root `runs/`)
 
-- [runs/README.md](runs/README.md) — explanation of run-directory layout
-- `runs/2026-05-26_socialism_run01/` — village + socialism (last v1 run; preserved as raw)
+- [runs/README.md](runs/README.md) — raw vs. summary layers; run-directory layout
+- [runs/2026-05-26_socialism_run01-summary.md](runs/2026-05-26_socialism_run01-summary.md) — first v1 run; **failed** via homogeneous "poetic sycophancy" (469 SAY, ~0 economic actions, whole cast starving). Motivated the v2 pivot.
 
 ## Decisions — ADRs for load-bearing choices
 
@@ -57,3 +59,6 @@ Catalog of every page in this corpus. Organized by category. The schema is in [C
 - [decisions/007-mvp-cast-size.md](decisions/007-mvp-cast-size.md) — 3 villagers + 3 NPCs for initial setup
 - [decisions/008-ollama-cloud-and-zod-boundary.md](decisions/008-ollama-cloud-and-zod-boundary.md) — Ollama Cloud + .env secrets + Zod at boundaries
 - [decisions/009-city-capitalism-christian-pivot.md](decisions/009-city-capitalism-christian-pivot.md) — v2 pivot: city + capitalism + (Christian/atheist) cast; retire TrueVine + socialism + monarchy
+- [decisions/010-run01-homogenisation-mitigations.md](decisions/010-run01-homogenisation-mitigations.md) — narrow survival enforcement, prose-only persona anchors, clean-experiment sequencing
+- [decisions/011-death-from-hunger.md](decisions/011-death-from-hunger.md) — agents die after `hungerDeathDays` hungry days (default 7)
+- [decisions/012-ocean-town-spatial-capabilities-economy.md](decisions/012-ocean-town-spatial-capabilities-economy.md) — **accepted/built** (behind `config.spatial`): ocean town, grid + zones, fishing/farming, core economy (shop+wall), individual + group wealth
